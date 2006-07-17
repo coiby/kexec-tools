@@ -7,6 +7,10 @@ Summary: The kexec/kdump userspace component.
 Source0: %{name}-%{version}.tar.gz
 Source1: kdump.init
 Source2: kdump.sysconfig
+Source3: mkdumprd
+Source4: kdump.conf
+Source5: kcp.c
+Source6: Makefile.kcp
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Requires(pre): coreutils chkconfig sed
 BuildRequires: zlib-devel
@@ -66,6 +70,11 @@ rm -f ../kexec-tools-1.101.spec
 
 cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .
+cp $RPM_SOURCE_DIR/kdump.conf .
+cp $RPM_SOURCE_DIR/mkdumprd .
+mkdir -p -m755 kcp
+cp $RPM_SOURCE_DIR/kcp.c kcp/kcp.c
+cp $RPM_SOURCE_DIR/Makefile.kcp kcp/Makefile
 
 %build
 %configure --sbindir=/sbin
@@ -79,11 +88,14 @@ mkdir -p -m755 $RPM_BUILD_ROOT/etc/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/sysconfig
 install -m 644 kdump.sysconfig $RPM_BUILD_ROOT/etc/sysconfig/kdump
 install -m 755 kdump.init $RPM_BUILD_ROOT/etc/rc.d/init.d/kdump
+install -m 755 mkdumprd $RPM_BUILD_ROOT/sbin/mkdumprd
+install -m 755 kdump.conf $RPM_BUILD_ROOT/etc/kdump.conf
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %post
+touch /etc/kdump.conf
 /sbin/chkconfig --add kdump
 
 %postun
@@ -103,6 +115,7 @@ exit 0
 %defattr(-,root,root,-)
 /sbin/*
 %config(noreplace,missingok) /etc/sysconfig/kdump
+%config(noreplace,missingok) /etc/kdump.conf
 %config /etc/rc.d/init.d/kdump
 %ifarch %{ix86} x86_64
 %{_libdir}/kexec-tools/kexec_test
