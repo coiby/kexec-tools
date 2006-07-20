@@ -49,6 +49,7 @@ Patch501: kexec-tools-1.101-ppc-fixup.patch
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-1.101-Makefile.patch
+Patch602: kexec-tools-1.101-Makefile-kcp.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -67,6 +68,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch401 -p1
 %patch501 -p1
 %patch601 -p1
+%patch602 -p1
 
 cp $RPM_SOURCE_DIR/kdump.init .
 cp $RPM_SOURCE_DIR/kdump.sysconfig .
@@ -125,6 +127,9 @@ exit 0
 %doc TODO
 
 %changelog
+* Wed Jul 19 2006 Neil Horman <nhorman@redhat.com> - 1.101-30%{dist}.1
+-add kexec frontend (bz 197695)
+
 * Wed Jul 12 2006 Jesse Keating <jkeating@redhat.com> - 1.101-29%{dist}.1
 - rebuild
 
