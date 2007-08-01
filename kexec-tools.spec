@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.101
-Release: 70%{?dist}
+Release: 71%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -13,11 +13,11 @@ Source5: kdump.sysconfig.ppc64
 Source6: kdump.sysconfig.ia64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: makedumpfile-1.1.1.tar.gz
+Source9: makedumpfile-1.1.5.tar.gz
 Source10: kexec-kdump-howto.txt
 Source11: firstboot_kdump.py
 Source12: mkdumprd.8
-Source13: pofiles.tar.gz
+Source13: kexec-tools-po.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
@@ -88,6 +88,7 @@ Patch603: kexec-tools-1.101-page_h.patch
 Patch604: kexec-tools-1.101-elf-format.patch
 Patch605: kexec-tools-1.101-ifdown.patch
 Patch606: kexec-tools-1.101-reloc-update.patch
+Patch607: kexec-tools-1.101-x86-add_buffer_retry.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -138,6 +139,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+%patch607 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -158,12 +160,11 @@ make %{?archdef}
 %ifarch %{ix86} x86_64 ia64 ppc64 ppc
 make -C makedumpfile
 %endif
-make -C po
+make -C kexec-tools-po
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make install %{?archdef} DESTDIR=$RPM_BUILD_ROOT
-make -C po install DESTDIR=$RPM_BUILD_ROOT
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
@@ -185,8 +186,8 @@ install -m 644 %{SOURCE12} $RPM_BUILD_ROOT%{_mandir}/man8/mkdumprd.8
 install -m 755 makedumpfile/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
 install -m 755 makedumpfile/makedumpfile-R.pl $RPM_BUILD_ROOT/sbin/makedumpfile-reasm
 %endif
-CHOMP_SIZE=`echo $RPM_BUILD_ROOT | wc -c`
-find $RPM_BUILD_ROOT -name '*.mo' | cut -b $CHOMP_SIZE- >> %{name}.lang
+make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
+%find_lang %{name}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -251,8 +252,18 @@ rm -f %{_datadir}/firstboot/modules/firstboot_kdump.py
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Wed Aug 01 2007 Neil Horman <nhorman@redhat.com> - 1.101-71%{dist}
+- Updating F-7 kexec-tools to fedora-testing version with following:
+- Update mkdumprd to suppres notifications /rev makedumpfile (bz 250341)
+- Fix mkdumprd to suppress informative messages (bz 248797)
+- Updated fr.po translations (bz 248287)
+- Fix up add_buff to retry locate_hole on segment overlap (bz 247989)
+- Fix up language files for kexec (bz 246508)
+- Fixing up initscript for LSB (bz 246967)
+- Fixed conflict in mkdumprd in use of /mnt (bz 222911)
+
 * Mon Jun 18 2007 Neil Horman <nhorman@redhat.com> - 1.101-70%{dist}
-- Fixed kdump.init to read /proc/cmdline properly (bz 244649)
+- Fixed kdump.init to properly read cmdline (bz 244649)
 
 * Wed Apr 11 2007 Neil Horman <nhorman@redhat.com> - 1.101-69%{dist}
 - Fixed up kdump.init to enforce mode 600 on authorized_keys2 (bz 235986)
