@@ -21,8 +21,8 @@ Source13: kexec-tools-po.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed 
 Requires: busybox >= 1.2.0
-BuildRequires: zlib-devel elfutils-libelf-devel glib2-devel pkgconfig
-BuildRequires: elfutils-libelf-devel elfutils-devel-static gettext
+BuildRequires: zlib-devel elfutils-devel-static glib2-devel 
+BuildRequires: pkgconfig intltool gettext 
 %ifarch %{ix86} x86_64 ppc64 ia64 ppc
 Obsoletes: diskdumputils netdump
 %endif
@@ -220,6 +220,7 @@ done
 %changelog
 * Wed Jan 02 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-3
 - Fix ARCH placement in kdump init script (bz 427201)
+- Fix BuildRequires
 
 * Mon Oct 01 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-2
 - Fix triggerpostun script (bz 308151)
