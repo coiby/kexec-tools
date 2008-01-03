@@ -64,6 +64,7 @@ Patch601: kexec-tools-1.102pre-elf-format.patch
 Patch602: kexec-tools-1.102pre-x86-add_buffer_retry.patch
 Patch603: kexec-tools-1.102pre-makedumpfile-xen-syms.patch
 Patch604: kexec-tools-1.102pre-disable-kexec-test.patch
+Patch605: kexec-tools-1.102pre-makedumpfile-makefile.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -90,6 +91,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch602 -p1
 %patch603 -p1 
 %patch604 -p1
+%patch605 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -221,6 +223,7 @@ done
 * Wed Jan 02 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-3
 - Fix ARCH placement in kdump init script (bz 427201)
 - Fix BuildRequires
+- Fix Makedumpfile to build with new libelf
 
 * Mon Oct 01 2007 Neil Horman <nhorman@redhat.com> - 1.102pre-2
 - Fix triggerpostun script (bz 308151)
