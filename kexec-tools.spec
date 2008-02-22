@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 3%{?dist}
+Release: 4%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -47,6 +47,7 @@ Patch102: kexec-tools-1.101-x86_64-exactmap.patch
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
 Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
+Patch302: kexec-tools-1.102pre-ppc64-buffer-overflow.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -80,6 +81,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch2 -p1
 
 %patch301 -p1
+%patch302 -p1
 
 %patch501 -p1
 
@@ -220,6 +222,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Fri Feb 22 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-4
+- Fix ppc buffer overflow (bz 428684)
+
 * Wed Jan 02 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-3
 - Fix ARCH placement in kdump init script (bz 427201)
 - Fix BuildRequires
