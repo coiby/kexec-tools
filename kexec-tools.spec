@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -48,6 +48,7 @@ Patch102: kexec-tools-1.101-x86_64-exactmap.patch
 #
 Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
 Patch302: kexec-tools-1.102pre-ppc64-buffer-overflow.patch
+Patch303: kexec-tools-1.102pre-ppc-boots-ppc64.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -82,6 +83,7 @@ rm -f ../kexec-tools-1.101.spec
 
 %patch301 -p1
 %patch302 -p1
+%patch303 -p1
 
 %patch501 -p1
 
@@ -222,6 +224,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Thu Feb 28 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-5
+- Readding ability for ppc to boot 64 bit kernel (bz 405341)
+
 * Fri Feb 22 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-4
 - Fix ppc buffer overflow (bz 428684)
 
