@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 6%{?dist}
+Release: 7%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -102,7 +102,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE13}
 
 %ifarch ppc
-%define archdef ARCH=ppc
+%define archdef ARCH=ppc64
 %endif
 
 %build
@@ -226,6 +226,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Fri Mar 14 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-7
+- Fix spec file so that ppc builds ppc64 binaries (bz 437305)
+
 * Mon Mar 10 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-6
 - Fix ppc64 devtree naming (bz 436740)
 
