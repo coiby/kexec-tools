@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -229,6 +229,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Mon Jul 14 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-10
+- Fix mkdumprd to support dynamic build busybox (bz 443878)
+
 * Wed Apr 16 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-9
 - Fix cmdline length issue
 
