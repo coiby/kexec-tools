@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -69,6 +69,7 @@ Patch604: kexec-tools-1.102pre-disable-kexec-test.patch
 Patch605: kexec-tools-1.102pre-vmcoreinfo.patch
 Patch606: kexec-tools-1.102pre-makedumpfile-makefile.patch
 Patch607: kexec-tools-1.102pre-cmdline-length.patch
+Patch608: kexec-tools-1.102pre-typos.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -101,6 +102,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch605 -p1
 %patch606 -p1
 %patch607 -p1
+%patch608 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -229,6 +231,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Jul 15 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-11
+- Fix up some misc typos (bz 455148)
+
 * Mon Jul 14 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-10
 - Fix mkdumprd to support dynamic build busybox (bz 443878)
 

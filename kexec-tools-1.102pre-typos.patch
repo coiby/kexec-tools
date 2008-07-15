@@ -1,0 +1,90 @@
+diff -up kexec-tools-testing-20070330/kdump/kdump.c.orig kexec-tools-testing-20070330/kdump/kdump.c
+--- kexec-tools-testing-20070330/kdump/kdump.c.orig	2008-07-15 13:41:02.000000000 -0400
++++ kexec-tools-testing-20070330/kdump/kdump.c	2008-07-15 13:41:09.000000000 -0400
+@@ -235,7 +235,7 @@ int main(int argc, char **argv)
+ 	}
+ 	start_addr = strtoull(start_addr_str, &end, 0);
+ 	if ((start_addr_str == end) || (*end != '\0')) {
+-		fprintf(stderr, "Bad core dump start addres: %s\n",
++		fprintf(stderr, "Bad core dump start address: %s\n",
+ 			start_addr_str);
+ 		exit(2);
+ 	}
+diff -up kexec-tools-testing-20070330/kexec/kexec.8.orig kexec-tools-testing-20070330/kexec/kexec.8
+--- kexec-tools-testing-20070330/kexec/kexec.8.orig	2008-07-15 12:56:10.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/kexec.8	2008-07-15 13:04:12.000000000 -0400
+@@ -144,7 +144,7 @@ Specify the highest memory address
+ to load code into.
+ 
+ .SH SUPPORTED KERNEL FILE TYPES AND OPTIONS
+-.B Beoboot-x86
++.B beoboot-x86
+ .RS
+ .TP
+ .B \-\-args\-elf
+@@ -183,6 +183,41 @@ Use
+ as the kernel's initial ramdisk.
+ .RE
+ .PP
++.B bzImage-x86
++.RS
++.TP
++.BI \-\-append= string
++Append
++.I string
++to the kernel command line.
++.TP
++.BI \-\-command\-line= string
++Set the kernel command line to
++.IR string .
++.TP
++.BI \-\-reuse-cmdline
++Use the command line from the running system. When a panic kernel is loaded, it
++strips the
++.I
++crashkernel
++parameter automatically. The
++.I BOOT_IMAGE
++parameter is also stripped.
++.TP
++.BI \-\-initrd= file
++Use
++.I file
++as the kernel's initial ramdisk.
++.TP
++.BI \-\-ramdisk= file
++Use
++.I file
++as the kernel's initial ramdisk.
++.TP
++.BI \-\-real-mode
++Use real-mode entry point.
++.RE
++.PP
+ .B multiboot-x86
+ .RS
+ .TP
+diff -up kexec-tools-testing-20070330/kexec/arch/i386/kexec-x86.c.orig kexec-tools-testing-20070330/kexec/arch/i386/kexec-x86.c
+--- kexec-tools-testing-20070330/kexec/arch/i386/kexec-x86.c.orig	2008-07-15 13:28:25.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/i386/kexec-x86.c	2008-07-15 13:28:31.000000000 -0400
+@@ -131,7 +131,7 @@ void arch_usage(void)
+ 	printf(
+ 		"     --reset-vga               Attempt to reset a standard vga device\n"
+ 		"     --serial=<port>           Specify the serial port for debug output\n"
+-		"     --serial-baud=<buad_rate> Specify the serial port baud rate\n"
++		"     --serial-baud=<baud_rate> Specify the serial port baud rate\n"
+ 		"     --console-vga             Enable the vga console\n"
+ 		"     --console-serial          Enable the serial console\n"
+ 		"     --elf32-core-headers      Prepare core headers in ELF32 format\n"
+diff -up kexec-tools-testing-20070330/kexec/arch/x86_64/kexec-x86_64.c.orig kexec-tools-testing-20070330/kexec/arch/x86_64/kexec-x86_64.c
+--- kexec-tools-testing-20070330/kexec/arch/x86_64/kexec-x86_64.c.orig	2008-07-15 13:28:41.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/x86_64/kexec-x86_64.c	2008-07-15 13:28:47.000000000 -0400
+@@ -133,7 +133,7 @@ void arch_usage(void)
+ 	printf(
+ 		"     --reset-vga               Attempt to reset a standard vga device\n"
+ 		"     --serial=<port>           Specify the serial port for debug output\n"
+-		"     --serial-baud=<buad_rate> Specify the serial port baud rate\n"
++		"     --serial-baud=<baud_rate> Specify the serial port baud rate\n"
+ 		"     --console-vga             Enable the vga console\n"
+ 		"     --console-serial          Enable the serial console\n"
+ 		);
