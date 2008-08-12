@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 11%{?dist}
+Release: 12%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -231,6 +231,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Aug 12 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-12
+- update mkdumprd to devel version since several fixes are missing 
+
 * Tue Jul 15 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-11
 - Fix up some misc typos (bz 455148)
 
