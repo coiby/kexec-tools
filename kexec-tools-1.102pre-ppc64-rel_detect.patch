@@ -1,0 +1,11 @@
+diff -up kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c.orig kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c
+--- kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c.orig	2008-09-02 11:57:57.000000000 -0400
++++ kexec-tools-testing-20070330/kexec/arch/ppc64/kexec-elf-rel-ppc64.c	2008-09-02 11:58:14.000000000 -0400
+@@ -56,6 +56,7 @@ void machine_apply_elf_rel(struct mem_eh
+ 		break;
+ 
+ 	case R_PPC64_ADDR64:
++	case R_PPC64_REL64:
+ 		/* Simply set it */
+ 		*(uint64_t *)location = value;
+ 		break;

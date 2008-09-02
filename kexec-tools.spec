@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 1.102pre 
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPL
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -50,6 +50,8 @@ Patch301: kexec-tools-1.102pre-ppc64_rmo_top.patch
 Patch302: kexec-tools-1.102pre-ppc64-buffer-overflow.patch
 Patch303: kexec-tools-1.102pre-ppc-boots-ppc64.patch 
 Patch304: kexec-tools-1.102pre-ppc64-devtree.patch
+Patch305: kexec-tools-1.102pre-ppc64-rel_detect.patch
+
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
 #
@@ -88,6 +90,7 @@ rm -f ../kexec-tools-1.101.spec
 %patch302 -p1
 %patch303 -p1
 %patch304 -p1
+%patch305 -p1
 
 %patch501 -p1
 
@@ -231,6 +234,9 @@ done
 %doc kexec-kdump-howto.txt
 
 %changelog
+* Tue Sep 02 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-13
+- fix ppc64 relocatable symbol detection (bz 460897)
+
 * Tue Aug 12 2008 Neil Horman <nhorman@redhat.com> - 1.102pre-12
 - update mkdumprd to devel version since several fixes are missing 
 
