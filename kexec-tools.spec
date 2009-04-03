@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 4%{?dist}
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -239,6 +239,9 @@ done
 
 
 %changelog
+* Fri Apr 03 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-4
+- Fix typo in mkdumprd which breaks use of makedumpfile (bz 493707)
+
 * Wed Nov 05 2008 Neil Horman <nhorman@redhat.com> - 2.0.0-3
 - Correct source file to use proper lang package (bz 335191)
 
