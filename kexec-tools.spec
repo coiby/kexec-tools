@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 12%{?dist}
+Release: 13%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -243,6 +243,9 @@ done
 
 
 %changelog
+* Thu Aug 27 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-13
+- Fixed raid6 detection in mkdumprd (bz 519767)
+
 * Tue Apr 07 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-12
 - Simplifed rootfs mounting code in mkdumprd (bz 494416)
 
