@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 14%{?dist}
+Release: 15%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -243,6 +243,9 @@ done
 
 
 %changelog
+* Fri Sep 04 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-15
+- Fix inclusion of stata_nv in initramfs (bz 521186)
+
 * Mon Aug 31 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-14
 - Update firstboot so it works properly (bz 508167)
 

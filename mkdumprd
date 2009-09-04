@@ -1077,6 +1077,17 @@ if [ -n "$CORE_COLLECTOR" -a ! -e /sys/kernel/vmcoreinfo ]; then
 fi
 
 #include extra user-specified modules for kdump initrd
+#EXTRA HACK:
+#sata_nv doesn't seem to have any path for me to detect it in sys
+#nor does it seem to wind up listed in any module dep chain 
+#so lets just check for it here via lsmod, and if we find it, assume we need it
+#
+lsmod | grep -q sata_nv
+if [ $? == 0 ]
+then
+   extra_kdump_mods="$extra_kdump_mods stata_nv"
+fi 
+
 for n in $extra_kdump_mods; do
     findmodule $n
 done
