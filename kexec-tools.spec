@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 15%{?dist}
+Release: 16%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -243,6 +243,9 @@ done
 
 
 %changelog
+* Wed Sep 09 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-16
+- Fix stata_nv typo in mkdumprd (bz 521657)
+
 * Fri Sep 04 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-15
 - Fix inclusion of stata_nv in initramfs (bz 521186)
 

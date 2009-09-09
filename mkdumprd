@@ -1085,7 +1085,7 @@ fi
 lsmod | grep -q sata_nv
 if [ $? == 0 ]
 then
-   extra_kdump_mods="$extra_kdump_mods stata_nv"
+   extra_kdump_mods="$extra_kdump_mods sata_nv"
 fi 
 
 for n in $extra_kdump_mods; do
