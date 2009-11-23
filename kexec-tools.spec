@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 27%{?dist}
+Release: 28%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -264,6 +264,9 @@ done
 
 
 %changelog
+* Mon Nov 23 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-28
+- Update firstboot_kdump.py to rawhide version (bz 539812)
+
 * Tue Sep 15 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-27
 - Fixing permissions on dracut module files
 
