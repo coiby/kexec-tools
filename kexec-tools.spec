@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 30%{?dist}
+Release: 31%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -264,6 +264,9 @@ done
 
 
 %changelog
+* Tue Dec 01 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-31
+- Revision bump (bz 519767)
+
 * Tue Dec 01 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-30
 - Revision bump (bz 519767)
 
