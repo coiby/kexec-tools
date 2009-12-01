@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 28%{?dist}
+Release: 29%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -264,6 +264,9 @@ done
 
 
 %changelog
+* Tue Dec 01 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-29
+- Update to support all raid modes (bz 519767)
+
 * Mon Nov 23 2009 Neil Horman <nhorman@redhat.com> - 2.0.0-28
 - Update firstboot_kdump.py to rawhide version (bz 539812)
 
