@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 33%{?dist}
+Release: 34%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -47,6 +47,7 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+Patch101: kexec-tools-2.0.0-x8664-kernel-text-size.patch
 
 #
 # Patches 201 through 300 are meant for ia64 kexec-tools enablement
@@ -82,7 +83,7 @@ component of the kernel's kexec feature.
 
 mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
-
+%patch101 -p1
 %patch601 -p1
 %patch602 -p1
 
@@ -268,6 +269,9 @@ done
 
 
 %changelog
+* Fri Apr 30 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-34
+- Fixed kernel text area search in kcore (bz 587750)
+
 * Thu Mar 11 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-33
 - Removed nash references from mkdumprd (bz 572569)
 
