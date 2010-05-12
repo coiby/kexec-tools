@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 34%{?dist}
+Release: 35%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -269,6 +269,9 @@ done
 
 
 %changelog
+* Wed May 12 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-35
+- Fixed readlink bug in mkdumprd (bz 590923)
+
 * Fri Apr 30 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-34
 - Fixed kernel text area search in kcore (bz 587750)
 

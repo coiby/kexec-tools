@@ -258,10 +258,6 @@ inst() {
     cp $1 $2
 }
 
-readlink() {
-    readlink "$1"
-}
-
 
 findstoragedriverinsys () {
     while [ ! -L device ]; do
@@ -293,7 +289,9 @@ findstoragedriver () {
         fi
         vecho "Looking for driver for device $device"
         device=`echo $device | sed 's/\//\!/g'`
-        pushd $(readlink /sys/class/block/$device ) >/dev/null 2>&1 || return
+        sysfs=$(findone -L /sys/block -maxdepth 2 -type d -name $device)
+        [ -z "$sysfs" ] && return
+        pushd $sysfs >/dev/null 2>&1
         findstoragedriverinsys
         popd >/dev/null 2>&1
     done
