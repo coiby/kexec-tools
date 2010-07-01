@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 35%{?dist}
+Release: 36%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -269,6 +269,39 @@ done
 
 
 %changelog
+* Thu Jul 01 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-36
+- Massive forward port of missing patches from RHEL
+- Update mkdumprd to pull in all modules needed
+- Fix mkdumprd typo
+- Removed universal add of ata_piix from mkdumprd
+- Fix infinite loop from modprobe changes
+- Fixed kexec-kdump-howto.doc for RHEL6
+- Update makedumpfile to 1.3.5
+- Improved mkdumprd run time
+- Cai's fix for broken regex
+- Fixing crashkernel syntax parsing
+- Fix initscript to return proper LSB return codes
+- Fixed bad call to resolve_dm_name
+- Added poweroff option to mkdumprd
+- Fixed readlink issue
+- Fixed x86_64 page_offset specifictaion
+- Fixed lvm setup loop to not hang
+- Added utsname support to makedumpfile for 2.6.32
+- Fix critical_disks list to exclude cciss/md
+- Add help info for -b option
+- Add ability to handle firmware hotplug events
+- Update mkdumprd to deal with changes in busybox fsck
+- Vitaly's fix to detect need for 64 bit elf
+- Fix major/minor numbers on /dev/rtc
+- Fix ssh id propogation w/ selinux
+- Add blacklist feature to kdump.conf
+- Remove bogus debug comment from mkdumprd.
+- Fix scp monitoring script
+- Fixed mkdumprd to remove dup insmod
+- Fixed kdump fsck pause
+- Fixed kdump option handling
+- fixed raid5 module detection
+
 * Wed May 12 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-35
 - Fixed readlink bug in mkdumprd (bz 590923)
 
