@@ -1250,10 +1250,6 @@ if [ -f /etc/mdadm.conf ]
 then
         cp /etc/mdadm.conf $MNTIMAGE/etc
         bin="$bin /sbin/mdadm"
-        for i in `cat /etc/mdadm.conf | grep ARRAY | sed -e's/\(^.*level=\)\(.*$\)/\2/' | cut -d" " -f1`
-        do
-            findmodule $i
-        done
 fi
 
 # we need the fstab file so that we can fsck properly

@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 36%{?dist}
+Release: 37%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -269,6 +269,9 @@ done
 
 
 %changelog
+* Thu Sep 16 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-37
+- Removed findmodule from mdadm scan (bz 629013)
+
 * Thu Jul 01 2010 Neil Horman <nhorman@redhat.com> - 2.0.0-36
 - Massive forward port of missing patches from RHEL
 - Update mkdumprd to pull in all modules needed
