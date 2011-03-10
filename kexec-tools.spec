@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 39%{?dist}.1
+Release: 40%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Thu Mar 10 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-40
+- Remove emitdms code from mkdumprd (bz 682859)
+
 * Wed Sep 29 2010 jkeating - 2.0.0-39.1
 - Rebuilt for gcc bug 634757
 
