@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 40%{?dist}
+Release: 41%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Mon Apr 04 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-41
+- Removed kpartx binary inclusion (bz 690661)
+
 * Thu Mar 10 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-40
 - Remove emitdms code from mkdumprd (bz 682859)
 
