@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.0 
-Release: 43%{?dist}
+Release: 44%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -282,6 +282,9 @@ done
 
 
 %changelog
+* Mon Jun 05 2011 Neil Horman <nhorman@redhat.com> - 2.0.0-44
+- Fixed misuse of readlink after directory change (bz 710744)
+
 * Thu May 19 2011 Neil Horman <nhorman@tuxdriver.com> - 2.0.0-43
 - Fix ppc bulid break
 
