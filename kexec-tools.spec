@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 3%{?dist}
+Release: 24%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -30,7 +30,7 @@ Source100: dracut-files.tbz2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
-Requires: busybox >= 1.2.0, dracut
+Requires: dracut dracut-network
 BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
@@ -167,8 +167,8 @@ make -C kexec-tools-po install DESTDIR=$RPM_BUILD_ROOT
 # untar the dracut package
 mkdir -p -m755 $RPM_BUILD_ROOT/etc/kdump-adv-conf
 tar -C $RPM_BUILD_ROOT/etc/kdump-adv-conf -jxvf %{SOURCE100}
-chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/check
-chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/install
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/module-setup.sh
+chmod 755 $RPM_BUILD_ROOT/etc/kdump-adv-conf/kdump_dracut_modules/99kdumpbase/kdump.sh
 
 
 #and move the custom dracut modules to the dracut directory
@@ -267,8 +267,6 @@ done
 %{_datadir}/kdump
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
 %config(noreplace,missingok) %{_sysconfdir}/kdump.conf
-%{_sysconfdir}/kdump-adv-conf/kdump_initscripts/
-%{_sysconfdir}/kdump-adv-conf/kdump_sample_manifests/
 %config %{_sysconfdir}/udev/rules.d/*
 %{_datadir}/dracut/modules.d/*
 %dir %{_localstatedir}/crash
@@ -282,6 +280,70 @@ done
 
 
 %changelog
+* Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-24
+- Fix default action handling.
+
+* Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-23
+- Install modified kdump.conf in initrd.
+
+* Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-22
+- Handle lvm in pre-pivot hook.
+
+* Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-21
+- Fix udev rules in module-setup.sh
+
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-20
+- Generate udev rules in module-setup.sh
+
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-19
+- Generate udev rules to handle device names.
+
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-18
+- Fix dump to local filesystem and raw dump.
+
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-17
+- Depend on dracut-network.
+
+* Mon Aug 1 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-16
+- Move dracut module detection code to module-setup.sh.
+
+* Wed Jul 28 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-15
+- Use shutdown module of dracut to handle reboot/shutdown/halt.
+
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-14
+- Wait for loginit.
+
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-13
+- Use absolute path of reboot/halt/poweroff.
+
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-12
+- Don't use consolehelper, use real reboot/halt/poweroff.
+
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-11
+- Rename initrd to initramfs.
+
+* Wed Jul 27 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-10
+- Don't depend on busybox, as it doesn't save much space.
+
+* Tue Jul 26 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-9
+- Parse default action.
+
+* Mon Jul 25 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-8
+- Move path/core_collector/default parsing code to initrd.
+
+* Mon Jul 25 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-7
+- Remove obsolete code in kdumpctl.
+
+* Mon Jul 25 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-6
+- Support core_collector and extran_bins.
+
+* Thu Jul 21 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-5
+- Bypass '-d' option.
+
+* Thu Jul 21 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-4
+- Update initramfs infrastructure to make it working
+  with dracut.
+
 * Wed Jul 06 2011 Neil Horman <nhorman@redhat.com> - 2.0.2-3
 - Removed sysv init script from package
 
