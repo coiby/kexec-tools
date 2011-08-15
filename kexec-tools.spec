@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 24%{?dist}
+Release: 25%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -280,6 +280,9 @@ done
 
 
 %changelog
+* Mon Aug 15 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-25
+- Switch back to old mkdumprd and also keep the new one.
+
 * Tue Aug 2 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-24
 - Fix default action handling.
 
