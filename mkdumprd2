@@ -1,0 +1,94 @@
+#!/bin/bash --norc
+# New mkdumprd
+#
+# Copyright 2011 Red Hat, Inc.
+#
+# Written by Cong Wang <amwang@redhat.com>
+#
+
+export IN_KDUMP=1
+
+conf_file="/etc/kdump.conf"
+extra_modules=""
+dracut_args="-m kdumpbase --add dash -c /dev/null"
+
+add_dracut_arg() {
+    dracut_args="$dracut_args $*"
+}
+
+add_dracut_module() {
+    add_dracut_arg "--add $1"
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+    -d)
+        shift
+        ;;
+    --noconf)
+        conf_file=""
+        shift
+        ;;
+    --debug)
+        add_dracut_arg "-v"
+        set -x
+        shift
+        ;;
+    *)
+        break
+        ;;
+    esac
+done
+
+# $1 target device
+# $2 if this is a raw dump
+check_local() {
+    return
+}
+
+# $1 remote target
+check_remote() {
+    return
+}
+
+if [ -n "$conf_file" ]; then
+    while read config_opt config_val;
+    do
+        case "$config_opt" in
+        extra_modules)
+            extra_modules="$extra_modules $config_val"
+            ;;
+        ext[234]|xfs|btrfs|minix)
+            check_local "$config_val" 0
+            ;;
+        raw)
+            check_local "$config_val" 1
+            ;;
+        net)
+            check_remote "$config_val"
+            add_dracut_module "nfs"
+            ;;
+        core_collector)
+            add_dracut_arg "-I ${config_val% *}"
+            ;;
+        extra_bins)
+            add_dracut_arg "-I $config_val"
+            ;;
+        *)
+            if [ -n $(echo $config_opt | grep "^#.*$") ]
+            then
+                continue
+            fi
+            ;;
+        esac
+    done < $conf_file
+fi
+
+if [ -n "$extra_modules" ]
+then
+    add_dracut_arg "--add-drivers $extra_modules"
+fi
+
+dracut $dracut_args -M "$@"
+exit $?
+
