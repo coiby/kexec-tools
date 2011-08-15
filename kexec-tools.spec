@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 25%{?dist}
+Release: 26%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -21,6 +21,7 @@ Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
+Source17: mkdumprd2
 
 #######################################
 # These are sources for mkdumprd2
@@ -30,7 +31,7 @@ Source100: dracut-files.tbz2
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Requires(pre): coreutils chkconfig sed zlib 
-Requires: dracut dracut-network
+Requires: busybox >= 1.2.0, dracut
 BuildRequires: dash 
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel 
 BuildRequires: pkgconfig intltool gettext 
@@ -149,6 +150,7 @@ SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
+install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/sbin/mkdumprd2
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
@@ -280,6 +282,9 @@ done
 
 
 %changelog
+* Mon Aug 15 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-26
+- Fix several issues caused by the previous revert.
+
 * Mon Aug 15 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-25
 - Switch back to old mkdumprd and also keep the new one.
 
