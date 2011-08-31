@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 26%{?dist}
+Release: 27%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -282,6 +282,10 @@ done
 
 
 %changelog
+* Wed Aug 31 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-27
+- Add debug_mem_level debugging option, from Jan Stancek.
+  Resolve Bug 731395.
+
 * Mon Aug 15 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-26
 - Fix several issues caused by the previous revert.
 

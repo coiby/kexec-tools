@@ -75,6 +75,8 @@ extra_kdump_mods=""
 
 TMPDISKLIST=`mktemp /tmp/disklist.XXXXXX`
 
+DEBUG_MEM_LEVEL="0"
+
 vecho()
 {
     NONL=""
@@ -114,6 +116,71 @@ usage () {
     else
         exit 1
     fi
+}
+
+function make_trace_mem()
+{
+    # parameters: msg [trace_level:trace]...
+    msg=$1
+    shift
+    if [ "$DEBUG_MEM_LEVEL" -gt 0 ]; then
+        make_trace show_memstats $DEBUG_MEM_LEVEL "[debug_mem]" "$msg" "$@"
+    fi
+}
+
+function make_trace()
+{
+    # parameters: func log_level prefix msg [trace_level:trace]...
+    func=$1
+    shift
+
+    log_level=`echo "$1" | grep -o '^[0-9]\+'`
+    shift
+
+    prefix=$1
+    shift
+
+    msg=$1
+    shift
+
+    if [ -z "$log_level" ]; then
+        return
+    fi
+
+    # deal with indentation
+    space_at_front=`echo "$msg" | grep -o "^[[:space:]]\+"`
+    msg=`echo "$msg" | sed 's/^\s\+//'`
+
+    msg_printed=0
+    while [ $# -gt 0 ]; do
+        trace_level=`echo "$1" | grep -o '^[0-9]\+'`
+        trace_in_higher_levels=`echo "$1" | grep -o '+'`
+        trace=`echo $1 | sed "s/^.*://"`
+
+        if [ -z "$trace_level" ]; then
+            trace_level=0
+        fi
+
+        insert_trace=0
+        if [ -n "$trace_in_higher_levels" ]; then
+            if [ "$log_level" -ge "$trace_level" ]; then
+                insert_trace=1
+            fi
+        else
+            if [ "$log_level" -eq "$trace_level" ]; then
+                insert_trace=1
+            fi
+        fi
+
+        if [ $insert_trace -eq 1 ]; then
+            if [ $msg_printed -eq 0 ]; then
+                emit "${space_at_front}echo \"$prefix $msg\""
+                msg_printed=1
+            fi
+            emit "${space_at_front}$func $trace"
+        fi
+        shift
+    done
 }
 
 moduledep() {
@@ -1115,6 +1182,15 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
         disk_timeout)
             DISK_TIMEOUT=$config_val
             ;;
+        debug_mem_level)
+            DEBUG_MEM_LEVEL=$config_val
+            echo "$DEBUG_MEM_LEVEL" | grep "^[0-3]$" &> /dev/null
+            if [ $? -ne 0 ]
+            then
+                echo "debug_mem_level is valid only for range 0-3"
+                exit 1
+            fi
+            ;;
         *)
             IS_COMMENT=`echo $config_opt | grep "^#.*$"`
             if [ -n "$IS_COMMENT" -o -z "$config_opt" ]
@@ -1376,6 +1452,28 @@ chmod 755 $MNTIMAGE/usr/share/udhcpc/default.script
 # SO WE IMPLEMENT THEM HERE AS scripts
 SCRIPTDIR=$MNTIMAGE/scriptfns
 mkdir -p $SCRIPTDIR
+
+cat >> $SCRIPTDIR/show_memstats << EOF
+#!/bin/msh
+while [ \$# -gt 0 ]; do
+    case \$1 in
+        shortmem)
+            cat /proc/meminfo  | grep -e "^MemFree" -e "^Cached" -e "^Slab"
+            ;;
+        mem)
+            cat /proc/meminfo
+            ;;
+        slab)
+            cat /proc/slabinfo
+            ;;
+        iomem)
+            cat /proc/iomem
+            ;;
+    esac
+    shift
+done
+echo
+EOF
 
 cat >> $SCRIPTDIR/map_interface << EOF
 #!/bin/msh
@@ -1710,6 +1808,7 @@ for i in 0 1 2 3 ; do
     emit "mknod /dev/ttyS$i c 4 $(($i + 64))"
 done
 emit "mknod /dev/mem c 1 1"
+make_trace_mem "At init start" 1+:mem 2+:iomem 3+:slab
 for MODULE in $MODULES; do
     text=""
     module=`echo $MODULE | sed "s|.*/||" | sed "s/.k\?o$//"`
@@ -1731,6 +1830,7 @@ for MODULE in $MODULES; do
     fi
     emit "echo \"Loading $fullmodule module\""
     emit "insmod /lib/$fullmodule $options"
+    make_trace_mem "After module $fullmodule has been loaded" 1:shortmem 2+:mem 3+:slab
 
     # Hack - we need a delay after loading usb-storage to give things
     #        time to settle down before we start looking a block devices
@@ -1774,6 +1874,7 @@ do
     echo Found
 done
 EOF
+make_trace_mem "After block device discovery" 1:shortmem 2+:mem 3+:slab
     
 # HACK: module loading + device creation isn't necessarily synchronous...
 # this will make sure that we have all of our devices before trying
@@ -1818,6 +1919,7 @@ emit "          MD_MIN=\`echo \$i | sed -e's/\(^.*\)\([0-9]\+$\)/\2/'\`"
 emit "          mknod \$i b 9 \$MD_MIN"
 emit "  done"
 emit "fi"
+make_trace_mem "After creation of block devices" 1:shortmem 2+:mem 3+:slab
 
 if [ -n "$vg_list" ]; then
     emit "echo Making device-mapper control node"
@@ -1868,6 +1970,7 @@ if [ -n "$vg_list" ]; then
     emit "   fi"
     emit "done"
 fi
+make_trace_mem "After scanning logical volumes" 1:shortmem 2+:mem 3+:slab
 
 kdump_chk()
 {
@@ -1934,6 +2037,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         emit "fi"
                     fi
                     emit "echo Saving to partition $config_val"
+                    make_trace_mem "Before dumping vmcore" 1:shortmem 2+:mem 3+:slab
                     emit "monitor_dd_progress 512 &"
                     if [ -z "$CORE_COLLECTOR" ]
                     then
@@ -1948,6 +2052,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "  echo -e \"\\\033[0JSaving core complete\""
                     emit "fi"
                     emit "sync"
+                    make_trace_mem "After dumping vmcore" 1:shortmem 2+:mem 3+:slab
                     if [ -x "$KDUMP_POST" ]; then
                         emit "$KDUMP_POST \$exitcode"
                     fi
@@ -2049,6 +2154,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         emit "  mkdir -p /mnt/$SAVE_PATH/$lhost-\$DATE"
                         emit "  VMCORE=/mnt/$SAVE_PATH/$lhost-\$DATE/vmcore"
                         emit "  export VMCORE"
+                        make_trace_mem "  Before dumping vmcore" 1:shortmem 2+:mem 3+:slab
                         emit "  monitor_cp_progress \$VMCORE-incomplete &"
                         emit "  $CORE_COLLECTOR /proc/vmcore \$VMCORE-incomplete >/dev/null"
                         emit "  exitcode=\$?"
@@ -2057,6 +2163,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         emit "      mv \$VMCORE-incomplete \$VMCORE"
                         emit "      echo -e \"\\\033[0JSaving core complete\""
                         emit "  fi"
+                        make_trace_mem "  After dumping vmcore" 1:shortmem 2+:mem 3+:slab
                         if [ -x "$KDUMP_POST" ]; then
                             emit "  $KDUMP_POST \$exitcode"
                         fi
@@ -2116,6 +2223,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         emit "ssh -q -o BatchMode=yes -o StrictHostKeyChecking=no $rlocation mkdir $SAVE_PATH/$lhost-\$DATE"
                         emit "VMCORE=$SAVE_PATH/$lhost-\$DATE/vmcore"
                         emit "export VMCORE"
+                        make_trace_mem "Before dumping vmcore" 1:shortmem 2+:mem 3+:slab
                         emit "monitor_scp_progress $rlocation $SAVE_PATH/$lhost-\$DATE/vmcore-incomplete &"
                         if [ -z "$CORE_COLLECTOR" ]
                         then
@@ -2134,6 +2242,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                         fi
                         emit "  echo -e \"\\\033[0JSaving core complete\""
                         emit "fi"
+                        make_trace_mem "After dumping vmcore" 1:shortmem 2+:mem 3+:slab
                         if [ -x "$KDUMP_POST" ]; then
                             emit "$KDUMP_POST \$exitcode"
                         fi
@@ -2161,6 +2270,8 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                 link_delay)
                     ;;
                 path)
+                    ;;
+                debug_mem_level)
                     ;;
                 *)
                     #test filesystem and directory creation
@@ -2219,6 +2330,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     if [ "$CORE_COLLECTOR" == "cp" ]; then
                         emit "  monitor_cp_progress \$VMCORE-incomplete &"
                     fi
+                    make_trace_mem "  Before dumping vmcore" 1:shortmem 2+:mem 3+:slab
                     emit "  $CORE_COLLECTOR /proc/vmcore \$VMCORE-incomplete >/dev/null"
                     emit "  exitcode=\$?"
                     emit "  if [ \$exitcode == 0 ]"
@@ -2227,6 +2339,7 @@ if [ -n "$KDUMP_CONFIG_FILE" ]; then
                     emit "      echo -e \"\\\033[0JSaving core complete\""
                     emit "  fi"
                     emit "  sync"
+                    make_trace_mem "  After dumping vmcore" 1:shortmem 2+:mem 3+:slab
                     if [ -x "$KDUMP_POST" ]; then
                         emit "  $KDUMP_POST \$exitcode"
                     fi

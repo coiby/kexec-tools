@@ -155,6 +155,21 @@ on service start if this invalid configuration is specified.  Also note that if
 no default action is specified, reboot is implied.
 .RE
 
+.B debug_mem_level <0-3>
+.RS
+Turns on debug/verbose output of kdump scripts regarding free/used memory at
+various points of execution. Higher level means more debugging output.
+.PP
+0 - no output
+.PP
+1 - partial /proc/meminfo
+.PP
+2 - /proc/meminfo
+.PP
+3 - /proc/meminfo + /proc/slabinfo
+.RE
+
+
 .SH EXAMPLES
 
 see 
