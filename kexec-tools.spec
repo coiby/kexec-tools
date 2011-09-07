@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 27%{?dist}
+Release: 28%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -21,10 +21,10 @@ Source13: kexec-tools-po.tar.gz
 Source14: 98-kexec.rules
 Source15: kdump.conf.5
 Source16: kdump.service
-Source17: mkdumprd2
+Source17: mkdumpramfs
 
 #######################################
-# These are sources for mkdumprd2
+# These are sources for mkdumpramfs
 # Which is currently in development
 #######################################
 Source100: dracut-files.tbz2
@@ -150,7 +150,7 @@ SYSCONFIG=$RPM_SOURCE_DIR/kdump.sysconfig.%{_target_cpu}
 install -m 644 $SYSCONFIG $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig/kdump
 
 install -m 755 %{SOURCE7} $RPM_BUILD_ROOT/sbin/mkdumprd
-install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/sbin/mkdumprd2
+install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/sbin/mkdumpramfs
 install -m 644 %{SOURCE8} $RPM_BUILD_ROOT%{_sysconfdir}/kdump.conf
 install -m 644 kexec/kexec.8 $RPM_BUILD_ROOT%{_mandir}/man8/kexec.8
 install -m 755 %{SOURCE11} $RPM_BUILD_ROOT%{_datadir}/kdump/firstboot_kdump.py
@@ -282,6 +282,9 @@ done
 
 
 %changelog
+* Wed Sep 7 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-28
+- Rename mkdumprd2 to mkdumpramfs.
+
 * Wed Aug 31 2011 Cong Wang <xiyou.wangcong@gmail.com> - 2.0.2-27
 - Add debug_mem_level debugging option, from Jan Stancek.
   Resolve Bug 731395.
