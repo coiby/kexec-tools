@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 29%{?dist}
+Release: 29.1%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -79,6 +79,8 @@ Patch604: kexec-tools-2.0.0-makedumpfile-boption.patch
 Patch605: kexec-tools-2.0.0-makedumpfile-2.6.32-sparsemem.patch
 Patch606: kexec-tools-2.0.2-purgatory-makefile.patch
 
+Patch607: kexec-tools-2.0.2-lshrdi3.patch
+
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
 kernel to boot using the kernel's kexec feature either on a
@@ -99,6 +101,7 @@ tar -z -x -v -f %{SOURCE9}
 %patch604 -p1
 %patch605 -p1
 %patch606 -p1
+%patch607 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
@@ -297,6 +300,9 @@ done
 
 
 %changelog
+* Fri Nov 04 2011 Karsten Hopp <karsten@redhat.com> 2.0.2-29.1
+- drop lshrdi3 assembler code, already defined
+
 * Fri Sep 9 2011 Tom Callaway <spot@fedoraproject.org> - 2.0.2-29
 - fix systemd scriptlets
 
