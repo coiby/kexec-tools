@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 29.1%{?dist}
+Release: 29.2%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -300,6 +300,9 @@ done
 
 
 %changelog
+* Fri Feb 10 2012 Cong Wang <xiyou.wangcong@gmail.com> 2.0.2-29.2
+- Fix the default sysconfig file on ppc64, fix bug 751129.
+
 * Fri Nov 04 2011 Karsten Hopp <karsten@redhat.com> 2.0.2-29.1
 - drop lshrdi3 assembler code, already defined
 
