@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.2
-Release: 29.2%{?dist}
+Release: 29.3%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -137,7 +137,6 @@ make -C kexec-tools-po
 
 %install
 make install DESTDIR=$RPM_BUILD_ROOT
-mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/rc.d/init.d
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/sysconfig
 mkdir -p -m755 $RPM_BUILD_ROOT%{_localstatedir}/crash
 mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man8/
@@ -145,7 +144,7 @@ mkdir -p -m755 $RPM_BUILD_ROOT%{_mandir}/man5/
 mkdir -p -m755 $RPM_BUILD_ROOT%{_docdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_datadir}/kdump
 mkdir -p -m755 $RPM_BUILD_ROOT%{_sysconfdir}/udev/rules.d
-mkdir -p $RPM_BUILD_ROOT/lib/systemd/system/
+mkdir -p $RPM_BUILD_ROOT%{_unitdir}
 mkdir -p -m755 $RPM_BUILD_ROOT%{_bindir}
 install -m 755 %{SOURCE1} $RPM_BUILD_ROOT%{_bindir}/kdumpctl
 
@@ -188,7 +187,6 @@ if [ $1 -eq 1 ] ; then
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
 touch /etc/kdump.conf
-/sbin/chkconfig --add kdump
 # This portion of the script is temporary.  Its only here
 # to fix up broken boxes that require special settings 
 # in /etc/sysconfig/kdump.  It will be removed when 
@@ -300,6 +298,9 @@ done
 
 
 %changelog
+* Thu Mar 22 2012 Cong Wang <xiyou.wangcong@gmail.com> 2.0.2-29.3
+- Fix service file, resolve bug 741272.
+
 * Fri Feb 10 2012 Cong Wang <xiyou.wangcong@gmail.com> 2.0.2-29.2
 - Fix the default sysconfig file on ppc64, fix bug 751129.
 
