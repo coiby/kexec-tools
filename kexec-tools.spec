@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 47%{?dist}
+Release: 47%{?dist}.1
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -61,6 +61,7 @@ Obsoletes: diskdumputils netdump
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
+Patch301: kexec-tools-2.0.3-ppc-ppc64-compile-purgatory-code-with-gcc-option-msoft-float.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -89,6 +90,7 @@ mkdir -p -m755 kcp
 tar -z -x -v -f %{SOURCE9}
 
 
+%patch301 -p1
 %patch601 -p1
 
 tar -z -x -v -f %{SOURCE13}
@@ -291,6 +293,9 @@ done
 
 
 %changelog
+* Tue Jun 12 2012 Dave Young <ruyang@redhat.com> - 2.0.3-47.1
+- ppc/ppc64: compile purgatory code with gcc option msoft-float
+
 * Thu May 3 2012 Dave Young <ruyang@redhat.com> - 2.0.3-47
 - remove dracut-files.tgz2
 
