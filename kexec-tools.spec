@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 47%{?dist}.1
+Release: 47%{?dist}.2
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -293,6 +293,10 @@ done
 
 
 %changelog
+* Fri Aug 10 2012 Dave Young <ruyang@redhat.com> - 2.0.3-47.2
+- udev rules fix
+- Cleanup temp file leaved at /tmp/
+
 * Tue Jun 12 2012 Dave Young <ruyang@redhat.com> - 2.0.3-47.1
 - ppc/ppc64: compile purgatory code with gcc option msoft-float
 
