@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.3
-Release: 47%{?dist}.2
+Release: 47%{?dist}.3
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component.
@@ -293,6 +293,9 @@ done
 
 
 %changelog
+* Fri Aug 31 2012 Dave Young <ruyang@redhat.com> - 2.0.3-47.3
+- firstboot fixes
+
 * Fri Aug 10 2012 Dave Young <ruyang@redhat.com> - 2.0.3-47.2
 - udev rules fix
 - Cleanup temp file leaved at /tmp/
