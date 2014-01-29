@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 21%{?dist}
+Release: 22%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -362,6 +362,10 @@ done
 %endif
 
 %changelog
+* Wed Jan 29 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-22
+- ssh dump: create random-seed manually
+- Add fence kdump support
+
 * Wed Jan 22 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-21
 - makedumpfile: Improve progress information for huge memory system
 - s390: use nr_cpus=1 instead of maxcpus=1
