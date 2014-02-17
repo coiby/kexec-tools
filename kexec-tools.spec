@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-Release: 22%{?dist}
+release: 23%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -365,6 +365,11 @@ done
 %endif
 
 %changelog
+* Mon Feb 17 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-23
+- add kdump-in-cluster-environment.txt to rpm pkg
+- Secure Boot status check warning
+- Some watchdog driver support
+
 * Wed Jan 29 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-22
 - ssh dump: create random-seed manually
 - Add fence kdump support
