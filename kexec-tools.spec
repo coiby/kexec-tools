@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-release: 23%{?dist}
+release: 24%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -365,6 +365,11 @@ done
 %endif
 
 %changelog
+* Wed Mar 05 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-24
+- Pass disable_cpu_apicid to kexec of capture kernel
+- Relax restriction of dumping on encrypted target
+- Regression fix on wdt kernel drivers install
+
 * Mon Feb 17 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-23
 - add kdump-in-cluster-environment.txt to rpm pkg
 - Secure Boot status check warning
