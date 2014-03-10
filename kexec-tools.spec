@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-release: 24%{?dist}
+release: 25%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -365,6 +365,10 @@ done
 %endif
 
 %changelog
+* Mon Mar 10 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-25
+- Warn user about save vmcore path mounted by another disk
+- omit dracut resume module
+
 * Wed Mar 05 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-24
 - Pass disable_cpu_apicid to kexec of capture kernel
 - Relax restriction of dumping on encrypted target
