@@ -97,6 +97,7 @@ Patch615: kexec-tools-2.0.4-makedumpfile-Add-non-mmap-option-to-disable-mmap-man
 Patch616: kexec-tools-2.0.4-makedumpfile-Fall-back-to-read-when-mmap-fails.patch
 Patch617: kexec-tools-2.0.4-vmcore-dmesg-struct_val_u64-not-casting-u64-to-u32.patch
 Patch618: kexec-tools-2.0.4-makedumpfile-Improve-progress-information-for-huge-memor.patch
+Patch619: kexec-tools-2.0.4-vmcore-dmesg-stack-smashing-happend-in-extreme-case.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -146,6 +147,7 @@ tar -z -x -v -f %{SOURCE19}
 %patch616 -p1
 %patch617 -p1
 %patch618 -p1
+%patch619 -p1
 
 tar -z -x -v -f %{SOURCE13}
 
