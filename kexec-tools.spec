@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-release: 25%{?dist}
+release: 26%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -367,6 +367,11 @@ done
 %endif
 
 %changelog
+* Wed Mar 26 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-26
+- fix issue when dump path is mounted on nfs.
+- vmcore-dmesg: stack smashing fix
+- get_ssh_size fix for localized df output
+
 * Mon Mar 10 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-25
 - Warn user about save vmcore path mounted by another disk
 - omit dracut resume module
