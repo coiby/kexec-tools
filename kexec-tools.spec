@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.4
-release: 26%{?dist}
+release: 27%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -367,6 +367,9 @@ done
 %endif
 
 %changelog
+* Thu Apr 03 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-27
+- Add fence_kdump support for generic clusters
+
 * Wed Mar 26 2014 WANG Chao <chaowang@redhat.com> - 2.0.4-26
 - fix issue when dump path is mounted on nfs.
 - vmcore-dmesg: stack smashing fix
