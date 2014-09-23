@@ -433,9 +433,17 @@ load_kdump()
 
 	KDUMP_COMMANDLINE=`prepare_cmdline`
 
+	# For secureboot enabled machines, use new kexec file based syscall.
+	# Old syscall will always fail as it does not have capability to
+	# to kernel signature verification.
+	if is_secure_boot_enforced; then
+		echo "Secure Boot is enabled. Using kexec file based syscall."
+		KEXEC_ARGS="$KEXEC_ARGS -s"
+	fi
+
 	$KEXEC $KEXEC_ARGS $standard_kexec_args \
 		--command-line="$KDUMP_COMMANDLINE" \
-		--initrd=$TARGET_INITRD $kdump_kernel 2>/dev/null
+		--initrd=$TARGET_INITRD $kdump_kernel
 	if [ $? == 0 ]; then
 		echo "kexec: loaded kdump kernel"
 		return 0
@@ -702,11 +710,6 @@ is_secure_boot_enforced()
 
 check_kdump_feasibility()
 {
-	if is_secure_boot_enforced; then
-		echo "Secure Boot is Enabled. Kdump service can't be started. Disable Secure Boot and retry"
-		return 1;
-	fi
-
 	if [ ! -e /sys/kernel/kexec_crash_loaded ]; then
 		echo "Kdump is not supported on this kernel"
 		return 1
@@ -826,7 +829,12 @@ stop_fadump()
 
 stop_kdump()
 {
-	$KEXEC -p -u 2>/dev/null
+	if is_secure_boot_enforced; then
+		$KEXEC -s -p -u
+	else
+		$KEXEC -p -u
+	fi
+
 	if [ $? != 0 ]; then
 		echo "kexec: failed to unload kdump kernel"
 		return 1

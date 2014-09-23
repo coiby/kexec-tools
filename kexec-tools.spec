@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 8%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -12,7 +12,7 @@ Source4: kdump.sysconfig.i386
 Source5: kdump.sysconfig.ppc64
 Source7: mkdumprd
 Source8: kdump.conf
-Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.6/makedumpfile-1.5.6.tar.gz
+Source9: http://downloads.sourceforge.net/project/makedumpfile/makedumpfile/1.5.7/makedumpfile-1.5.7.tar.gz
 Source10: kexec-kdump-howto.txt
 Source12: mkdumprd.8
 Source14: 98-kexec.rules
@@ -47,7 +47,7 @@ Requires: dracut, dracut-network, ethtool
 BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzip2-devel ncurses-devel bison flex lzo-devel snappy-devel
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
-%ifarch %{ix86} x86_64 ppc64 ppc s390x
+%ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
 Obsoletes: diskdumputils netdump
 %endif
 
@@ -62,10 +62,14 @@ ExcludeArch: aarch64
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
+Patch101: kexec-tools-2.0.7-Provide-an-option-to-use-new-kexec-system-call.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
+Patch301: kexec-tools-2.0.7-kexec-ppc64-move-to-device-tree-version-17.patch
+Patch302: kexec-tools-2.0.7-kexec-ppc64-disabling-exception-handling-when-buildi.patch
+Patch303: kexec-tools-2.0.7-ppc64-kdump-Fix-ELF-header-endianess.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -78,12 +82,6 @@ ExcludeArch: aarch64
 # Patches 601 onward are generic patches
 #
 Patch601: kexec-tools-2.0.3-disable-kexec-test.patch
-Patch602: kexec-tools-2.0.4-makedumpfile-Fix-Makefile-for-eppic_makedumpfile.so-build.patch
-Patch603: kexec-tools-2.0.4-makedumpfile-Introduce-the-mdf_pfn_t-type.patch
-Patch604: kexec-tools-2.0.4-makedumpfile-Fix-free-bitmap_buffer_cyclic-error.patch
-Patch605: kexec-tools-2.0.4-makedumpfile-Remove-the-1st-bitmap-buffer-from-the-ELF-.patch
-Patch606: kexec-tools-2.0.4-makedumpfile-Move-counting-pfn_memhole-for-cyclic-mode.patch
-Patch607: kexec-tools-2.0.4-makedumpfile-Stop-maximizing-the-bitmap-buffer-to-reduc.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -92,7 +90,7 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %package eppic
 Requires: %{name} = %{version}-%{release}
 Summary: Additional eppic_makedumpfile.so shared object
@@ -119,13 +117,11 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 
+%patch101 -p1
 %patch601 -p1
-%patch602 -p1
-%patch603 -p1
-%patch604 -p1
-%patch605 -p1
-%patch606 -p1
-%patch607 -p1
+%patch301 -p1
+%patch302 -p1
+%patch303 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -145,10 +141,10 @@ cp %{SOURCE10} .
 cp %{SOURCE21} .
 
 make
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 make -C eppic/libeppic
-make -C makedumpfile-1.5.6 LINKTYPE=dynamic USELZO=on USESNAPPY=on
-make -C makedumpfile-1.5.6 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
+make -C makedumpfile-1.5.7 LINKTYPE=dynamic USELZO=on USESNAPPY=on
+make -C makedumpfile-1.5.7 LDFLAGS="-I../eppic/libeppic -L../eppic/libeppic" eppic_makedumpfile.so
 %endif
 make -C kdump-anaconda-addon/po
 
@@ -189,12 +185,14 @@ install -m 755 -D %{SOURCE22} $RPM_BUILD_ROOT%{_prefix}/lib/systemd/system-gener
 mkdir -p $RPM_BUILD_ROOT/usr/sbin
 install -m 755 %{SOURCE17} $RPM_BUILD_ROOT/usr/sbin/rhcrashkernel-param
 
-%ifarch %{ix86} x86_64 ppc64 s390x
-install -m 755 makedumpfile-1.5.6/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
-install -m 644 makedumpfile-1.5.6/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
-install -m 644 makedumpfile-1.5.6/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
-install -m 644 makedumpfile-1.5.6/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
-install -m 755 makedumpfile-1.5.6/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
+install -m 755 makedumpfile-1.5.7/makedumpfile $RPM_BUILD_ROOT/sbin/makedumpfile
+install -m 644 makedumpfile-1.5.7/makedumpfile.8.gz $RPM_BUILD_ROOT/%{_mandir}/man8/makedumpfile.8.gz
+install -m 644 makedumpfile-1.5.7/makedumpfile.conf.5.gz $RPM_BUILD_ROOT/%{_mandir}/man5/makedumpfile.conf.5.gz
+install -m 644 makedumpfile-1.5.7/makedumpfile.conf $RPM_BUILD_ROOT/%{_sysconfdir}/makedumpfile.conf.sample
+install -m 755 makedumpfile-1.5.7/eppic_makedumpfile.so $RPM_BUILD_ROOT/%{_libdir}/eppic_makedumpfile.so
+mkdir -p $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
+install -m 644 makedumpfile-1.5.7/eppic_scripts/* $RPM_BUILD_ROOT/usr/share/makedumpfile/eppic_scripts/
 %endif
 make -C kdump-anaconda-addon install DESTDIR=$RPM_BUILD_ROOT
 %find_lang kdump-anaconda-addon
@@ -293,7 +291,7 @@ done
 %{_bindir}/*
 %{_datadir}/kdump
 %{_prefix}/lib/kdump
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %{_sysconfdir}/makedumpfile.conf.sample
 %endif
 %config(noreplace,missingok) %{_sysconfdir}/sysconfig/kdump
@@ -313,9 +311,10 @@ done
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
 
-%ifarch %{ix86} x86_64 ppc64 s390x
+%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
 %files eppic
 %{_libdir}/eppic_makedumpfile.so
+/usr/share/makedumpfile/eppic_scripts/
 %endif
 
 %files anaconda-addon -f kdump-anaconda-addon.lang
@@ -323,6 +322,18 @@ done
 %doc
 
 %changelog
+* Tue Sep 23 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-10
+- Enable ppc64le arch.
+- Rebase makedumpfile-1.5.7
+- add sample eppic scripts to kexec-tools-eppic package
+- Restart kdump service on cpu ADD/REMOVE events
+
+* Wed Sep 10 2014 Baoquan He <bhe@redhat.com> - 2.0.7-9
+- kdumpctl: Use kexec file based syscall for secureboot enabled machines
+- kdumpctl: Use kexec file based mode to unload kdump kernel
+- kdumpctl: Do not redirect error messages to /dev/null
+- kexec: Provide an option to use new kexec system call
+
 * Fri Aug 29 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-8
 - use absolute path for executable in systemd service
 - update to kdump-anaconda-addon-003
