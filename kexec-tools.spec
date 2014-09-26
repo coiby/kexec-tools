@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.7
-Release: 10%{?dist}
+Release: 11%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -133,6 +133,10 @@ tar -z -x -v -f %{SOURCE23}
 %ifarch ppc64
     --host=powerpc64-redhat-linux-gnu \
     --build=powerpc64-redhat-linux-gnu \
+%endif
+%ifarch ppc64le
+    --host=powerpc64le-redhat-linux-gnu \
+    --build=powerpc64le-redhat-linux-gnu \
 %endif
     --sbindir=/sbin
 rm -f kexec-tools.spec.in
@@ -322,6 +326,10 @@ done
 %doc
 
 %changelog
+* Fri Sep 26 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-11
+- Fix build failure on ppc64le
+- Fix an issue on iscsi boot environment
+
 * Tue Sep 23 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-10
 - Enable ppc64le arch.
 - Rebase makedumpfile-1.5.7
