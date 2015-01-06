@@ -2,7 +2,7 @@
 
 # continue here only if we have to save dump.
 if [ -f /etc/fadump.initramfs ] && [ ! -f /proc/device-tree/rtas/ibm,kernel-dump ]; then
-	return
+	exit 0
 fi
 
 exec &> /dev/console
@@ -131,6 +131,27 @@ get_host_ip()
     return 0
 }
 
+# kdump will change the ethernet device name in the 2nd using prefix "kdump-",
+# the link scope of ipv6 has the format like fe80::5054:ff:fe48:ca80%eth0,
+# So we should correct the known hosts
+correct_known_hosts()
+{
+    if is_ipv6_target && is_ssh_dump_target; then
+        local _ipv6 _netdev _pre_netdev
+        local _known_hosts="/root/.ssh/known_hosts"
+        local _srcaddr=$(get_option_value ssh)
+
+        [ "x" = "x""$_srcaddr" ] && return 1
+
+        if `echo $_srcaddr | grep -q "%"`; then
+            _ipv6=`get_remote_host $_srcaddr`
+            _netdev=${_srcaddr#*-}
+            _pre_netdev=$(kdump_setup_ifname $_netdev)
+            sed -i "s#$_ipv6\%$_netdev#$_ipv6\%$_pre_netdev#" $_known_hosts
+        fi
+    fi
+}
+
 read_kdump_conf()
 {
     if [ ! -f "$KDUMP_CONF" ]; then
@@ -169,18 +190,13 @@ fence_kdump_notify()
 read_kdump_conf
 fence_kdump_notify
 
-if [ -z "$CORE_COLLECTOR" ];then
-    CORE_COLLECTOR=$DEFAULT_CORE_COLLECTOR
-    if is_ssh_dump_target || is_raw_dump_target; then
-        CORE_COLLECTOR="$CORE_COLLECTOR -F"
-    fi
-fi
-
 get_host_ip
 if [ $? -ne 0 ]; then
     echo "kdump: get_host_ip exited with non-zero status!"
     exit 1
 fi
+
+correct_known_hosts
 
 if [ -z "$DUMP_INSTRUCTION" ]; then
     add_dump_code "dump_fs $NEWROOT"

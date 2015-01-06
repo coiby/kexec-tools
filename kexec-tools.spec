@@ -1,6 +1,6 @@
 Name: kexec-tools
-Version: 2.0.7
-Release: 11%{?dist}
+Version: 2.0.8
+Release: 5%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -24,8 +24,9 @@ Source19: eppic_030413.tar.gz
 Source20: kdump-lib.sh
 Source21: kdump-in-cluster-environment.txt
 Source22: kdump-dep-generator.sh
-Source23: kdump-anaconda-addon-003.tar.gz
+Source23: kdump-anaconda-addon-005-2-g86366ae.tar.gz
 Source24: kdump-lib-initramfs.sh
+Source25: kdump.sysconfig.ppc64le
 
 #######################################
 # These are sources for mkdumpramfs
@@ -48,7 +49,7 @@ BuildRequires: zlib-devel zlib zlib-static elfutils-devel-static glib2-devel bzi
 BuildRequires: pkgconfig intltool gettext 
 BuildRequires: systemd-units
 %ifarch %{ix86} x86_64 ppc64 ppc s390x ppc64le
-Obsoletes: diskdumputils netdump
+Obsoletes: diskdumputils netdump kexec-tools-eppic
 %endif
 
 ExcludeArch: aarch64
@@ -62,14 +63,10 @@ ExcludeArch: aarch64
 #
 # Patches 101 through 200 are meant for x86_64 kexec-tools enablement
 #
-Patch101: kexec-tools-2.0.7-Provide-an-option-to-use-new-kexec-system-call.patch
 
 #
 # Patches 301 through 400 are meant for ppc64 kexec-tools enablement
 #
-Patch301: kexec-tools-2.0.7-kexec-ppc64-move-to-device-tree-version-17.patch
-Patch302: kexec-tools-2.0.7-kexec-ppc64-disabling-exception-handling-when-buildi.patch
-Patch303: kexec-tools-2.0.7-ppc64-kdump-Fix-ELF-header-endianess.patch
 
 #
 # Patches 401 through 500 are meant for s390 kexec-tools enablement
@@ -90,18 +87,6 @@ normal or a panic reboot. This package contains the /sbin/kexec
 binary and ancillary utilities that together form the userspace
 component of the kernel's kexec feature.
 
-%ifarch %{ix86} x86_64 ppc64 s390x ppc64le
-%package eppic
-Requires: %{name} = %{version}-%{release}
-Summary: Additional eppic_makedumpfile.so shared object
-Group: Applications/System
-
-%description eppic
-The eppic_makedumpfile.so shared object is loaded by the
-"makedumpfile --eppic" option, and is used to erase sensitive
-or confidential kernel data from a dumpfile.
-%endif
-
 %package anaconda-addon
 Summary:        Kdump configuration anaconda addon
 Requires:       anaconda >= 21.33
@@ -117,11 +102,7 @@ tar -z -x -v -f %{SOURCE19}
 tar -z -x -v -f %{SOURCE23}
 
 
-%patch101 -p1
 %patch601 -p1
-%patch301 -p1
-%patch302 -p1
-%patch303 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -314,9 +295,7 @@ done
 %doc TODO
 %doc kexec-kdump-howto.txt
 %doc kdump-in-cluster-environment.txt
-
 %ifarch %{ix86} x86_64 ppc64 s390x ppc64le
-%files eppic
 %{_libdir}/eppic_makedumpfile.so
 /usr/share/makedumpfile/eppic_scripts/
 %endif
@@ -326,6 +305,29 @@ done
 %doc
 
 %changelog
+* Tue Jan 06 2015 WANG Chao <chaowang@redhat.com> - 2.0.8-5
+- remove panic_on_warn kernel param in 2nd kernel
+- remove sysctl.conf to restore sysctl default values in 2nd kernel
+- fix a core_collector issue in ssh and raw dump case
+- update to kdump-anaconda-addon-005-2-g86366ae.tar.gz
+- some cleanups
+
+* Tue Nov 04 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-4
+- Fix ppc64le installation issue
+- Fix get_option_value function
+
+* Tue Oct 28 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-3
+- fix static route corner case
+- fadump fix
+
+* Tue Oct 21 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-2
+- Fix build issue on ARM
+
+* Mon Oct 20 2014 WANG Chao <chaowang@redhat.com> - 2.0.8-1
+- Rebase kexec-tools-2.0.8
+- Remove subpackage kexec-tools-eppic
+- Rebase kdump-anaconda-addon-005
+
 * Fri Sep 26 2014 WANG Chao <chaowang@redhat.com> - 2.0.7-11
 - Fix build failure on ppc64le
 - Fix an issue on iscsi boot environment
