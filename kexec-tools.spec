@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.10
-Release: 9%{?dist}
+Release: 10%{?dist}
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,9 @@ done
 %doc
 
 %changelog
+* Fri Mar 25 2016 Dave Young <dyoung@redhat.com> - 2.0.10-10
+- ppc64le: fix kexec hang due to ppc64 elf abi breakage
+
 * Mon Oct 19 2015 Dave Young <dyoung@redhat.com> - 2.0.10-9
 - kexec-kdump-howto:Add introduction of parallel dumping
 - Remove duplicate prefix path ${initdir}
