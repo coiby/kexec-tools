@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.12
-Release: 7%{?dist}
+Release: 7%{?dist}.1
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -316,6 +316,12 @@ done
 %doc
 
 %changelog
+* Mon Jul 4 2016 Dave Young <dyoung@redhat.com> - 2.0.12-7.1
+- Update kdump anaconda addon (Fedora bz1349997)
+
+* Mon Jun 27 2016 Dave Young <dyoung@redhat.com> - 2.0.12-7
+- Fix changelog date format in rpm spec
+
 * Mon Jun 27 2016 Dave Young <dyoung@redhat.com> - 2.0.12-6
 - get_persistent_dev(): fix name contention with dracut's similar function
 
