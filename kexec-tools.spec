@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 4%{?dist}
+Release: 4%{?dist}.1
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -315,6 +315,9 @@ done
 %doc
 
 %changelog
+* Sun Aug 28 2016 Dave Young <dyoung@redhat.com> - 2.0.13-4.1
+- Revert the --mount patches in F25 since dracut-044-117 is rawhide only
+
 * Fri Aug 26 2016 Dave Young <dyoung@redhat.com> - 2.0.13-4
 - Add special dump target "--mount" in dracut_args
 
