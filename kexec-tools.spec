@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 4%{?dist}
+Release: 4%{?dist}.1
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -329,6 +329,9 @@ done
 %doc
 
 %changelog
+* Fri Mar 17 2017 Dave Young <dyoung@redhat.com> - 2.0.14-4.1
+- Fix kernel kaslr caused regressions (kexec -p and makedumpfile --mem-usage)
+
 * Mon Jan 23 2017 Dave Young <dyoung@redhat.com> - 2.0.14-4
 - drop kdump script rhcrashkernel-param in kexec-tools repo
 - kdumpctl: sanity check of nr_cpus for x86_64 in case running out of vectors
