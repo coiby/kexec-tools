@@ -97,6 +97,9 @@ Patch605: kexec-tools-2.0.13-makedumpfile-x86-64-translate-all-VA-to-PA-using-pa
 Patch606: kexec-tools-2.0.13-makedumpfile-x86-64-kill-is-vmalloc-addr-x86-64.patch
 Patch607: kexec-tools-2.0.13-makedumpfile-x86-64-kill-some-unused-initialization.patch
 Patch608: kexec-tools-2.0.13-makedumpfile-x86_64-fix-page_offset-calculation.patch
+Patch609: kexec-tools-2.0.13-makedumpfile-Adapt-code-to-get-value-of-phys_base.patch
+Patch610: kexec-tools-2.0.13-kexec-tools-x86-get_kernel_vaddr_and_size-off-by-one.patch
+Patch611: kexec-tools-2.0.13-build_mem_phdrs-check-if-p_paddr-is-invalid.patch
 
 %description
 kexec-tools provides /sbin/kexec binary that facilitates a new
@@ -134,6 +137,9 @@ tar -z -x -v -f %{SOURCE23}
 %patch606 -p1
 %patch607 -p1
 %patch608 -p1
+%patch609 -p1
+%patch610 -p1
+%patch611 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc

@@ -1,0 +1,126 @@
+From acdbb1d6aee9207ccdea697326574e8d6142cd73 Mon Sep 17 00:00:00 2001
+Message-Id: <acdbb1d6aee9207ccdea697326574e8d6142cd73.1491806706.git.panand@redhat.com>
+From: Baoquan He <bhe@redhat.com>
+Date: Thu, 10 Nov 2016 15:30:57 +0900
+Subject: [PATCH] [PATCH v2 1/2] Adapt code to get value of phys_base
+
+* Required for kernel 4.9
+
+Kernel code only exports virtual address of phys_base now and it's helpless
+for Crash and Makedumpfile. Below patch which changes code to export value
+of phys_base has been posted to upstream. So adapt code to get it.
+
+kexec: Change to export the value of phys_base instead of symbol address
+marc.info/?l=linux-kernel&m=147856863629624&w=2
+
+Signed-off-by: Baoquan He <bhe@redhat.com>
+---
+ arch/x86_64.c  | 12 +++++-------
+ makedumpfile.c |  5 ++---
+ makedumpfile.h |  2 +-
+ 3 files changed, 8 insertions(+), 11 deletions(-)
+
+diff --git a/makedumpfile-1.6.0/arch/x86_64.c b/makedumpfile-1.6.0/arch/x86_64.c
+index 3ef33ae4ef2d..010ea10e6fa8 100644
+--- a/makedumpfile-1.6.0/arch/x86_64.c
++++ b/makedumpfile-1.6.0/arch/x86_64.c
+@@ -62,6 +62,10 @@ get_phys_base_x86_64(void)
+ 	 * Get the relocatable offset
+ 	 */
+ 	info->phys_base = 0; /* default/traditional */
++	if (NUMBER(phys_base) != NOT_FOUND_NUMBER) {
++		info->phys_base = NUMBER(phys_base);
++		return TRUE;
++	}
+ 
+ 	for (i = 0; get_pt_load(i, &phys_start, NULL, &virt_start, NULL); i++) {
+ 		if (virt_start >= __START_KERNEL_map) {
+@@ -187,12 +191,6 @@ vtop4_x86_64(unsigned long vaddr)
+ {
+ 	unsigned long page_dir, pml4, pgd_paddr, pgd_pte, pmd_paddr, pmd_pte;
+ 	unsigned long pte_paddr, pte;
+-	unsigned long phys_base;
+-
+-	if (SYMBOL(phys_base) != NOT_FOUND_SYMBOL)
+-		phys_base = info->phys_base;
+-	else
+-		phys_base = 0;
+ 
+ 	if (SYMBOL(init_level4_pgt) == NOT_FOUND_SYMBOL) {
+ 		ERRMSG("Can't get the symbol of init_level4_pgt.\n");
+@@ -202,7 +200,7 @@ vtop4_x86_64(unsigned long vaddr)
+ 	/*
+ 	 * Get PGD.
+ 	 */
+-	page_dir = SYMBOL(init_level4_pgt) - __START_KERNEL_map + phys_base;
++	page_dir = SYMBOL(init_level4_pgt) - __START_KERNEL_map + info->phys_base;
+ 	page_dir += pml4_index(vaddr) * sizeof(unsigned long);
+ 	if (!readmem(PADDR, page_dir, &pml4, sizeof pml4)) {
+ 		ERRMSG("Can't get pml4 (page_dir:%lx).\n", page_dir);
+diff --git a/makedumpfile-1.6.0/makedumpfile.c b/makedumpfile-1.6.0/makedumpfile.c
+index b916dfb8b189..a3f711e3e9bf 100644
+--- a/makedumpfile-1.6.0/makedumpfile.c
++++ b/makedumpfile-1.6.0/makedumpfile.c
+@@ -1507,7 +1507,6 @@ get_symbol_info(void)
+ 	SYMBOL_INIT(init_level4_pgt, "init_level4_pgt");
+ 	SYMBOL_INIT(vmlist, "vmlist");
+ 	SYMBOL_INIT(vmap_area_list, "vmap_area_list");
+-	SYMBOL_INIT(phys_base, "phys_base");
+ 	SYMBOL_INIT(node_online_map, "node_online_map");
+ 	SYMBOL_INIT(node_states, "node_states");
+ 	SYMBOL_INIT(node_memblk, "node_memblk");
+@@ -2134,7 +2133,6 @@ write_vmcoreinfo_data(void)
+ 	WRITE_SYMBOL("init_level4_pgt", init_level4_pgt);
+ 	WRITE_SYMBOL("vmlist", vmlist);
+ 	WRITE_SYMBOL("vmap_area_list", vmap_area_list);
+-	WRITE_SYMBOL("phys_base", phys_base);
+ 	WRITE_SYMBOL("node_online_map", node_online_map);
+ 	WRITE_SYMBOL("node_states", node_states);
+ 	WRITE_SYMBOL("node_data", node_data);
+@@ -2261,6 +2259,7 @@ write_vmcoreinfo_data(void)
+ 
+ 	WRITE_NUMBER("PAGE_BUDDY_MAPCOUNT_VALUE", PAGE_BUDDY_MAPCOUNT_VALUE);
+ 	WRITE_NUMBER("KERNEL_IMAGE_SIZE", KERNEL_IMAGE_SIZE);
++	WRITE_NUMBER("phys_base", phys_base);
+ 
+ 	WRITE_NUMBER("HUGETLB_PAGE_DTOR", HUGETLB_PAGE_DTOR);
+ 
+@@ -2488,7 +2487,6 @@ read_vmcoreinfo(void)
+ 	READ_SYMBOL("init_level4_pgt", init_level4_pgt);
+ 	READ_SYMBOL("vmlist", vmlist);
+ 	READ_SYMBOL("vmap_area_list", vmap_area_list);
+-	READ_SYMBOL("phys_base", phys_base);
+ 	READ_SYMBOL("node_online_map", node_online_map);
+ 	READ_SYMBOL("node_states", node_states);
+ 	READ_SYMBOL("node_data", node_data);
+@@ -2609,6 +2607,7 @@ read_vmcoreinfo(void)
+ 
+ 	READ_NUMBER("PAGE_BUDDY_MAPCOUNT_VALUE", PAGE_BUDDY_MAPCOUNT_VALUE);
+ 	READ_NUMBER("KERNEL_IMAGE_SIZE", KERNEL_IMAGE_SIZE);
++	READ_NUMBER("phys_base", phys_base);
+ 
+ 	READ_NUMBER("HUGETLB_PAGE_DTOR", HUGETLB_PAGE_DTOR);
+ 
+diff --git a/makedumpfile-1.6.0/makedumpfile.h b/makedumpfile-1.6.0/makedumpfile.h
+index 338c651388f0..422b6bed102b 100644
+--- a/makedumpfile-1.6.0/makedumpfile.h
++++ b/makedumpfile-1.6.0/makedumpfile.h
+@@ -1394,7 +1394,6 @@ struct symbol_table {
+ 	unsigned long long	init_level4_pgt;
+ 	unsigned long long	vmlist;
+ 	unsigned long long	vmap_area_list;
+-	unsigned long long	phys_base;
+ 	unsigned long long	node_online_map;
+ 	unsigned long long	node_states;
+ 	unsigned long long	node_memblk;
+@@ -1718,6 +1717,7 @@ struct number_table {
+ 	long	SECTION_SIZE_BITS;
+ 	long	MAX_PHYSMEM_BITS;
+ 	long    HUGETLB_PAGE_DTOR;
++	long	phys_base;
+ };
+ 
+ struct srcfile_table {
+-- 
+2.9.3
+

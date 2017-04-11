@@ -1,0 +1,43 @@
+From dbb99d938810b60035122a1bcc68c4d585a0e57f Mon Sep 17 00:00:00 2001
+Message-Id: <dbb99d938810b60035122a1bcc68c4d585a0e57f.1491799333.git.panand@redhat.com>
+From: Dave Young <dyoung@redhat.com>
+Date: Thu, 8 Dec 2016 10:52:22 +0800
+Subject: [PATCH] kexec-tools/x86: get_kernel_vaddr_and_size off-by-one fix
+
+I got below error while tesing kexec -p:
+"Can't find kernel text map area from kcore"
+
+The case is the pt_load start addr was same as stext_sym. The checking
+code should really be saddr <= stext_sym so that the right pt_load area
+includes stext_sym can be matched.
+
+This was not reported by people previously because it will fail over to
+use hardcode X86_64__START_KERNEL_map to match the pt_load areas again
+in later code and it sometimes succeeds because of kernel address
+randomization.
+
+With this change according to my test stext_sym checking can garantee
+falling into right pt_load area if we get correct stext_sym.
+
+Signed-off-by: Dave Young <dyoung@redhat.com>
+Signed-off-by: Simon Horman <horms@verge.net.au>
+---
+ kexec/arch/i386/crashdump-x86.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kexec/arch/i386/crashdump-x86.c b/kexec/arch/i386/crashdump-x86.c
+index ab833d416320..88aeee33572b 100644
+--- a/kexec/arch/i386/crashdump-x86.c
++++ b/kexec/arch/i386/crashdump-x86.c
+@@ -205,7 +205,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
+ 			unsigned long long size;
+ 
+ 			/* Look for kernel text mapping header. */
+-			if (saddr < stext_sym && eaddr > stext_sym) {
++			if (saddr <= stext_sym && eaddr > stext_sym) {
+ 				saddr = _ALIGN_DOWN(saddr, X86_64_KERN_VADDR_ALIGN);
+ 				elf_info->kern_vaddr_start = saddr;
+ 				size = eaddr - saddr;
+-- 
+2.9.3
+
