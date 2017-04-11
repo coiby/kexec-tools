@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.13
-Release: 7%{?dist}.1
+Release: 7%{?dist}.2
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -344,6 +344,9 @@ done
 %doc
 
 %changelog
+* Tue Apr 11 2017 Dave Young <dyoung@redhat.com> - 2.0.13-7.2
+- kexec-tools fixes for 4.9+ kernels, rhbz1440587
+
 * Fri Nov 11 2016 Dave Young <dyoung@redhat.com> - 2.0.13-7.1
 - kexec/arch/i386: Add support for KASLR memory randomization
 
