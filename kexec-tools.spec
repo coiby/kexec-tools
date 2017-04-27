@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.14
-Release: 4%{?dist}.1
+Release: 4%{?dist}.2
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -329,6 +329,9 @@ done
 %doc
 
 %changelog
+* Thu Apr 27 2017 Dave Young <dyoung@redhat.com> - 2.0.14-4.2
+- kdump.sysconfig/x86_64: Add nokaslr to kdump kernel cmdline
+
 * Fri Mar 17 2017 Dave Young <dyoung@redhat.com> - 2.0.14-4.1
 - Fix kernel kaslr caused regressions (kexec -p and makedumpfile --mem-usage)
 
