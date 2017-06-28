@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 1%{?dist}.2
+Release: 1%{?dist}.3
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -325,6 +325,10 @@ done
 %doc
 
 %changelog
+* Wed Jun 28 2017 Dave Young <dyoung@redhat.com> - 2.0.15-1.3
+- aarch64: Add makedumpfile executable
+- dracut-module-setup: Fix test for inclusion of DRM modules
+
 * Fri Jun 23 2017 Dave Young <dyoung@redhat.com> - 2.0.15-1.2
 - update sources file
 
