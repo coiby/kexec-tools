@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 1%{?dist}.3
+Release: 1%{?dist}.4
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -91,6 +91,8 @@ Patch606: kexec-tools-2.0.14-makedumpfile-elf_info-kcore-check-for-invalid-physi
 Patch607: kexec-tools-2.0.14-makedumpfile-makedumpfile-Correct-the-calculation-of.patch
 Patch608: kexec-tools-2.0.14-makedumpfile-makedumpfile-Discard-process_dump_load.patch
 Patch609: kexec-tools-2.0.14-makedumpfile-mem-usage-allow-to-work-only-with-f-for.patch
+Patch610: kexec-tools-2.0.15-makedumpfile-take-care-of-init-level4-pgt-rename-in-kernel.patch
+Patch611: kexec-tools-2.0.15-makedumpfile-fix-SECTION_MAP_MASK-for-kernel-bigger-than-4.13.patch
 
 
 %description
@@ -122,6 +124,8 @@ tar -z -x -v -f %{SOURCE23}
 %patch607 -p1
 %patch608 -p1
 %patch609 -p1
+%patch610 -p1
+%patch611 -p1
 
 %ifarch ppc
 %define archdef ARCH=ppc
@@ -325,6 +329,9 @@ done
 %doc
 
 %changelog
+* Wed Sep 20 2017 Dave Young <dyoung@redhat.com> - 2.0.15-1.4
+- Pull in two makedumpfile patches for 4.13.0+ kernel
+
 * Wed Jun 28 2017 Dave Young <dyoung@redhat.com> - 2.0.15-1.3
 - aarch64: Add makedumpfile executable
 - dracut-module-setup: Fix test for inclusion of DRM modules
