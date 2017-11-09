@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 1%{?dist}.5
+Release: 1%{?dist}.6
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -329,6 +329,9 @@ done
 %doc
 
 %changelog
+* Thu Nov 9 2017 Dave Young <dyoung@redhat.com> - 2.0.15-1.6
+- Revert "Use absolute path /usr/bin/dracut in mkdumprd"
+
 * Thu Nov 9 2017 Dave Young <dyoung@redhat.com> - 2.0.15-1.5
 - Use absolute path /usr/bin/dracut in mkdumprd
 
