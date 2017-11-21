@@ -1,6 +1,6 @@
 Name: kexec-tools
 Version: 2.0.15
-Release: 12%{?dist}
+Release: 12%{?dist}.1
 License: GPLv2
 Group: Applications/System
 Summary: The kexec/kdump userspace component
@@ -317,6 +317,9 @@ done
 %doc
 
 %changelog
+* Tue Nov 21 2017 Dave Young <dyoung@redhat.com> - 2.0.15-12.1
+- revert a series of patches to use --no-hostonly-default-device since dracut has not backport the support in f27
+
 * Thu Aug 17 2017 Dave Young <dyoung@redhat.com> - 2.0.15-12
 - makedumpfile: fix 4.13 kernel larget vmcore bug
 - Revert "Improve 'cpu add' udev rules"
