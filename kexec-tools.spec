@@ -357,7 +357,7 @@ done
 %endif
 
 %changelog
-* Tue Aug 04 2020 Kairui Song <kasong@redhat.com> - 2.0.20-16
+* Tue Aug 04 2020 Kairui Song <kasong@redhat.com> - 2.0.20-17
 - Drop static lib dependencies
 - Revert "x86_64: enable the kexec file load by default"
 - Revert "s390x: enable the kexec file load by default"
