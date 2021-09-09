@@ -1,7 +1,6 @@
 #!/bin/bash
 
 _DRACUT_KDUMP_NM_TMP_DIR="/tmp/$$-DRACUT_KDUMP_NM"
-
 _TMP_KDUMP_NETIFS="$_DRACUT_KDUMP_NM_TMP_DIR/kdump_netifs"
 _TMP_KDUMP_NETIFS_IPv46_USAGE="$_DRACUT_KDUMP_NM_TMP_DIR/kdump_netifs_ipv46_usage"
 
@@ -386,6 +385,29 @@ kdump_install_nmconnections() {
     # Note this line of code can be removed after NetworkManager >= 1.35.2
     # gets released.
     echo > "${initdir}/usr/libexec/nm-initrd-generator"
+}
+
+kdump_install_nm_netif_allowlist() {
+    local _netif _except_netif _netif_allowlist _netif_allowlist_nm_conf
+
+    for _netif in $1; do
+        _per_mac=$(kdump_get_perm_addr "$_netif")
+        if [[ "$_per_mac" != 'not set' ]]; then
+            _except_netif="mac:$_per_mac"
+        else
+            _except_netif="interface-name:$_netif"
+        fi
+        _netif_allowlist="${_netif_allowlist}except:${_except_netif};"
+    done
+
+    _netif_allowlist_nm_conf=$_DRACUT_KDUMP_NM_TMP_DIR/netif_allowlist_nm_conf
+    cat << EOF > "$_netif_allowlist_nm_conf"
+[device-others]
+match-device=${_netif_allowlist}
+managed=false
+EOF
+
+    inst "$_netif_allowlist_nm_conf" "/etc/NetworkManager/conf.d/10-kdump-netif_allowlist.conf"
 }
 
 kdump_setup_bridge() {
@@ -1056,6 +1078,7 @@ install() {
     if [[ -n "$_netifs" ]]; then
         kdump_install_nmconnections "$_netifs"
         apply_nm_initrd_generator_timeouts
+        kdump_install_nm_netif_allowlist "$_netifs"
     fi
 
     # For the lvm type target under kdump, in /etc/lvm/lvm.conf we can
