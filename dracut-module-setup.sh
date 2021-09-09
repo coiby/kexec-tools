@@ -349,6 +349,37 @@ kdump_setup_ifname() {
     echo "$_ifname"
 }
 
+_install_nmconnections() {
+    local _dev _nmconnection_file_path _nmconnection_name _initrd_nmconnection_file_path
+
+    for _dev in "${!nmconnection_map[@]}"; do
+        _nmconnection_file_path=${nmconnection_map[$_dev]}
+        _nmconnection_name=$(basename "$_nmconnection_file_path")
+        _initrd_nmconnection_file_path="/etc/NetworkManager/system-connections/$_nmconnection_name"
+        inst "$_nmconnection_file_path" "$_initrd_nmconnection_file_path"
+    done
+}
+
+
+kdump_install_nmconnections() {
+    declare -A nmconnection_map ipv4_usage ipv6_usage
+    local _netifs _netif
+
+    _netifs=$1
+
+    for _netif in $_netifs; do
+        nmconnection_map[$_netif]=$_netif
+    done
+
+    while IFS=: read -r _netif _nmconn; do
+        if [[ -v "nmconnection_map[$_netif]" ]] ; then
+            nmconnection_map[$_netif]="$_nmconn"
+        fi
+    done <<< "$(nmcli -t -f device,filename connection show --active)"
+
+    _install_nmconnections
+}
+
 kdump_setup_bridge() {
     local _netdev=$1
     local _brif _dev _mac _kdumpdev
