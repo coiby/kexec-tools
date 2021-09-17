@@ -2,6 +2,24 @@
 
 _DRACUT_KDUMP_NM_TMP_DIR="/tmp/$$-DRACUT_KDUMP_NM"
 
+_TMP_KDUMP_NETIFS="$_DRACUT_KDUMP_NM_TMP_DIR/kdump_netifs"
+_TMP_KDUMP_NETIFS_IPv46_USAGE="$_DRACUT_KDUMP_NM_TMP_DIR/kdump_netifs_ipv46_usage"
+
+_save_kdump_netifs() {
+    echo -n " $1" >> "$_TMP_KDUMP_NETIFS"
+}
+
+_get_kdump_netifs() {
+    declare -A _unique_netifs
+    local _netif
+
+    for _netif in $(< $_TMP_KDUMP_NETIFS); do
+        _unique_netifs[$_netif]=1
+    done
+
+    echo -n "${!_unique_netifs[@]}"
+}
+
 cleanup() {
     rm -rf "$_DRACUT_KDUMP_NM_TMP_DIR"
 }
@@ -16,6 +34,8 @@ kdump_module_init() {
     fi
 
     mkdir -p "$_DRACUT_KDUMP_NM_TMP_DIR"
+    echo -n > "$_TMP_KDUMP_NETIFS"
+    echo -n > "$_TMP_KDUMP_NETIFS_IPv46_USAGE"
 
     . /lib/kdump/kdump-lib.sh
 }
@@ -96,39 +116,6 @@ source_ifcfg_file() {
     else
         dwarning "The ifcfg file of $1 is not found!"
     fi
-}
-
-kdump_setup_dns() {
-    local _netdev="$1"
-    local _conpath="$2"
-    local _nameserver _dns _tmp array
-    local _dnsfile=${initdir}/etc/cmdline.d/42dns.conf
-
-    _tmp=$(get_nmcli_field_by_conpath "IP4.DNS" "$_conpath")
-    # shellcheck disable=SC2206
-    array=(${_tmp//|/ })
-    if [[ ${array[*]} ]]; then
-        for _dns in "${array[@]}"; do
-            echo "nameserver=$_dns" >> "$_dnsfile"
-        done
-    else
-        dwarning "Failed to get DNS info via nmcli output. Now try sourcing ifcfg script"
-        source_ifcfg_file "$_netdev"
-        [[ -n $DNS1 ]] && echo "nameserver=$DNS1" > "$_dnsfile"
-        [[ -n $DNS2 ]] && echo "nameserver=$DNS2" >> "$_dnsfile"
-    fi
-
-    while read -r content; do
-        _nameserver=$(echo "$content" | grep ^nameserver)
-        [[ -z $_nameserver ]] && continue
-
-        _dns=$(echo "$_nameserver" | awk '{print $2}')
-        [[ -z $_dns ]] && continue
-
-        if [[ ! -f $_dnsfile ]] || ! grep -q "$_dns" "$_dnsfile"; then
-            echo "nameserver=$_dns" >> "$_dnsfile"
-        fi
-    done < "/etc/resolv.conf"
 }
 
 # $1: repeat times
@@ -239,89 +226,6 @@ cal_netmask_by_prefix() {
     else
         echo -n "${_res}${_seperator}${_third_part}"
     fi
-}
-
-#$1: netdev name
-#$2: srcaddr
-#if it use static ip echo it, or echo null
-kdump_static_ip() {
-    local _netdev="$1" _srcaddr="$2" kdumpnic="$3" _ipv6_flag
-    local _netmask _gateway _ipaddr _target _nexthop _prefix
-
-    _ipaddr=$(ip addr show dev "$_netdev" permanent | awk "/ $_srcaddr\/.* /{print \$2}")
-
-    if is_ipv6_address "$_srcaddr"; then
-        _ipv6_flag="-6"
-    fi
-
-    if [[ -n $_ipaddr ]]; then
-        _gateway=$(ip $_ipv6_flag route list dev "$_netdev" \
-            | awk '/^default /{print $3}' | head -n 1)
-
-        if [[ "x" != "x"$_ipv6_flag ]]; then
-            # _ipaddr="2002::56ff:feb6:56d5/64", _netmask is the number after "/"
-            _netmask=${_ipaddr#*\/}
-            _srcaddr="[$_srcaddr]"
-            _gateway="[$_gateway]"
-        else
-            _prefix=$(cut -d'/' -f2 <<< "$_ipaddr")
-            if ! _netmask=$(cal_netmask_by_prefix "$_prefix" "$_ipv6_flag"); then
-                derror "Failed to calculate netmask for $_ipaddr"
-                exit 1
-            fi
-        fi
-        echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
-    fi
-
-    while read -r _route; do
-        _target=$(echo "$_route" | awk '{print $1}')
-        _nexthop=$(echo "$_route" | awk '{print $3}')
-        if [[ "x" != "x"$_ipv6_flag ]]; then
-            _target="[$_target]"
-            _nexthop="[$_nexthop]"
-        fi
-        echo "rd.route=$_target:$_nexthop:$kdumpnic"
-    done >> "${initdir}/etc/cmdline.d/45route-static.conf" \
-        < <(/sbin/ip $_ipv6_flag route show | grep -v default \
-            | grep ".*via.* $_netdev " | grep -v "^[[:space:]]*nexthop")
-
-    kdump_handle_mulitpath_route "$_netdev" "$_srcaddr" "$kdumpnic"
-}
-
-kdump_handle_mulitpath_route() {
-    local _netdev="$1" _srcaddr="$2" kdumpnic="$3" _ipv6_flag
-    local _target _nexthop _route _weight _max_weight _rule
-
-    if is_ipv6_address "$_srcaddr"; then
-        _ipv6_flag="-6"
-    fi
-
-    while IFS="" read -r _route; do
-        if [[ $_route =~ [[:space:]]+nexthop ]]; then
-            _route=${_route##[[:space:]]}
-            # Parse multipath route, using previous _target
-            [[ $_target == 'default' ]] && continue
-            [[ $_route =~ .*via.*\ $_netdev ]] || continue
-
-            _weight=$(echo "$_route" | cut -d ' ' -f7)
-            if [[ $_weight -gt $_max_weight ]]; then
-                _nexthop=$(echo "$_route" | cut -d ' ' -f3)
-                _max_weight=$_weight
-                if [[ "x" != "x"$_ipv6_flag ]]; then
-                    _rule="rd.route=[$_target]:[$_nexthop]:$kdumpnic"
-                else
-                    _rule="rd.route=$_target:$_nexthop:$kdumpnic"
-                fi
-            fi
-        else
-            [[ -n $_rule ]] && echo "$_rule"
-            _target=$(echo "$_route" | cut -d ' ' -f1)
-            _rule="" _max_weight=0 _weight=0
-        fi
-    done >> "${initdir}/etc/cmdline.d/45route-static.conf" \
-        <<< "$(/sbin/ip $_ipv6_flag route show)"
-
-    [[ -n $_rule ]] && echo "$_rule" >> "${initdir}/etc/cmdline.d/45route-static.conf"
 }
 
 kdump_get_mac_addr() {
@@ -486,102 +390,55 @@ kdump_install_nmconnections() {
 
 kdump_setup_bridge() {
     local _netdev=$1
-    local _brif _dev _mac _kdumpdev
+    local _dev
     for _dev in "/sys/class/net/$_netdev/brif/"*; do
         [[ -e $_dev ]] || continue
         _dev=${_dev##*/}
-        _kdumpdev=$_dev
         if kdump_is_bond "$_dev"; then
-            (kdump_setup_bond "$_dev" "$(get_nmcli_connection_apath_by_ifname "$_dev")") || exit 1
+            (kdump_setup_bond "$_dev") || exit 1
         elif kdump_is_team "$_dev"; then
             kdump_setup_team "$_dev"
         elif kdump_is_vlan "$_dev"; then
             kdump_setup_vlan "$_dev"
-        else
-            _mac=$(kdump_get_mac_addr "$_dev")
-            _kdumpdev=$(kdump_setup_ifname "$_dev")
-            echo -n " ifname=$_kdumpdev:$_mac" >> "${initdir}/etc/cmdline.d/41bridge.conf"
         fi
-        _brif+="$_kdumpdev,"
+        _save_kdump_netifs "$_dev"
     done
-    echo " bridge=$_netdev:${_brif%,}" >> "${initdir}/etc/cmdline.d/41bridge.conf"
 }
 
-# drauct takes bond=<bondname>[:<bondslaves>:[:<options>]] syntax to parse
-#    bond. For example:
-#     bond=bond0:eth0,eth1:mode=balance-rr
 kdump_setup_bond() {
     local _netdev="$1"
-    local _conpath="$2"
-    local _dev _mac _slaves _kdumpdev _bondoptions
+    local _dev
+
     for _dev in $(< "/sys/class/net/$_netdev/bonding/slaves"); do
-        _mac=$(kdump_get_perm_addr "$_dev")
-        _kdumpdev=$(kdump_setup_ifname "$_dev")
-        echo -n " ifname=$_kdumpdev:$_mac" >> "${initdir}/etc/cmdline.d/42bond.conf"
-        _slaves+="$_kdumpdev,"
+        _save_kdump_netifs "$_dev"
     done
-    echo -n " bond=$_netdev:${_slaves%,}" >> "${initdir}/etc/cmdline.d/42bond.conf"
-
-    _bondoptions=$(get_nmcli_field_by_conpath "bond.options" "$_conpath")
-
-    if [[ -z $_bondoptions ]]; then
-        dwarning "Failed to get bond configuration via nmlci output. Now try sourcing ifcfg script."
-        source_ifcfg_file "$_netdev"
-        _bondoptions="$(echo "$BONDING_OPTS" | xargs echo | tr " " ",")"
-    fi
-
-    if [[ -z $_bondoptions ]]; then
-        derror "Get empty bond options"
-        exit 1
-    fi
-
-    echo ":$_bondoptions" >> "${initdir}/etc/cmdline.d/42bond.conf"
 }
 
 kdump_setup_team() {
     local _netdev=$1
-    local _dev _mac _slaves _kdumpdev
+    local _dev
     for _dev in $(teamnl "$_netdev" ports | awk -F':' '{print $2}'); do
-        _mac=$(kdump_get_perm_addr "$_dev")
-        _kdumpdev=$(kdump_setup_ifname "$_dev")
-        echo -n " ifname=$_kdumpdev:$_mac" >> "${initdir}/etc/cmdline.d/44team.conf"
-        _slaves+="$_kdumpdev,"
+        _save_kdump_netifs "$_dev"
     done
-    echo " team=$_netdev:${_slaves%,}" >> "${initdir}/etc/cmdline.d/44team.conf"
-    #Buggy version teamdctl outputs to stderr!
-    #Try to use the latest version of teamd.
-    if ! teamdctl "$_netdev" config dump > "${initdir}/tmp/$$-$_netdev.conf"; then
-        derror "teamdctl failed."
-        exit 1
-    fi
-    inst_dir /etc/teamd
-    inst_simple "${initdir}/tmp/$$-$_netdev.conf" "/etc/teamd/$_netdev.conf"
-    rm -f "${initdir}/tmp/$$-$_netdev.conf"
 }
 
 kdump_setup_vlan() {
     local _netdev=$1
-    local _phydev
-    local _netmac
-    local _kdumpdev
+    local _parent_netif
 
-    _phydev="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
-    _netmac="$(kdump_get_mac_addr "$_phydev")"
+    _parent_netif="$(awk '/^Device:/{print $2}' /proc/net/vlan/"$_netdev")"
 
     #Just support vlan over bond and team
-    if kdump_is_bridge "$_phydev"; then
+    if kdump_is_bridge "$_parent_netif"; then
         derror "Vlan over bridge is not supported!"
         exit 1
-    elif kdump_is_bond "$_phydev"; then
-        (kdump_setup_bond "$_phydev" "$(get_nmcli_connection_apath_by_ifname "$_phydev")") || exit 1
-        echo " vlan=$(kdump_setup_ifname "$_netdev"):$_phydev" > "${initdir}/etc/cmdline.d/43vlan.conf"
-    elif kdump_is_team "$_phydev"; then
-        (kdump_setup_team "$_phydev") || exit 1
-        echo " vlan=$(kdump_setup_ifname "$_netdev"):$_phydev" > "${initdir}/etc/cmdline.d/43vlan.conf"
-    else
-        _kdumpdev="$(kdump_setup_ifname "$_phydev")"
-        echo " vlan=$(kdump_setup_ifname "$_netdev"):$_kdumpdev ifname=$_kdumpdev:$_netmac" > "${initdir}/etc/cmdline.d/43vlan.conf"
+    elif kdump_is_bond "$_parent_netif"; then
+        (kdump_setup_bond "$_parent_netif") || exit 1
+    elif kdump_is_team "$_parent_netif"; then
+        (kdump_setup_team "$_parent_netif") || exit 1
     fi
+
+    _save_kdump_netifs "$_parent_netif"
 }
 
 # find online znet device
@@ -672,16 +529,13 @@ kdump_get_remote_ip() {
 # initramfs accessing giving destination
 # $1: destination host
 kdump_install_net() {
-    local _destaddr _srcaddr _route _netdev _conpath kdumpnic
-    local _static _proto _ip_conf _ip_opts _ifname_opts
+    local _destaddr _srcaddr _route _netdev kdumpnic _ip_proc
     local _znet_netdev _znet_conpath
 
     _destaddr=$(kdump_get_remote_ip "$1")
     _route=$(kdump_get_ip_route "$_destaddr")
     _srcaddr=$(kdump_get_ip_route_field "$_route" "src")
     _netdev=$(kdump_get_ip_route_field "$_route" "dev")
-    _conpath=$(get_nmcli_connection_apath_by_ifname "$_netdev")
-    _netmac=$(kdump_get_mac_addr "$_netdev")
     kdumpnic=$(kdump_setup_ifname "$_netdev")
 
     _znet_netdev=$(find_online_znet_device)
@@ -693,60 +547,33 @@ kdump_install_net() {
         fi
     fi
 
-    _static=$(kdump_static_ip "$_netdev" "$_srcaddr" "$kdumpnic")
-    if [[ -n $_static ]]; then
-        _proto=none
-    elif is_ipv6_address "$_srcaddr"; then
-        _proto=auto6
-    else
-        _proto=dhcp
-    fi
-
-    _ip_conf="${initdir}/etc/cmdline.d/40ip.conf"
-    _ip_opts=" ip=${_static}$kdumpnic:${_proto}"
-
-    # dracut doesn't allow duplicated configuration for same NIC, even they're exactly the same.
-    # so we have to avoid adding duplicates
-    # We should also check /proc/cmdline for existing ip=xx arg.
-    # For example, iscsi boot will specify ip=xxx arg in cmdline.
-    if [[ ! -f $_ip_conf ]] || ! grep -q "$_ip_opts" "$_ip_conf" \
-        && ! grep -q "ip=[^[:space:]]*$_netdev" /proc/cmdline; then
-        echo "$_ip_opts" >> "$_ip_conf"
-    fi
-
     if kdump_is_bridge "$_netdev"; then
         kdump_setup_bridge "$_netdev"
     elif kdump_is_bond "$_netdev"; then
-        (kdump_setup_bond "$_netdev" "$_conpath") || exit 1
+        (kdump_setup_bond "$_netdev") || exit 1
     elif kdump_is_team "$_netdev"; then
         kdump_setup_team "$_netdev"
     elif kdump_is_vlan "$_netdev"; then
         kdump_setup_vlan "$_netdev"
-    else
-        _ifname_opts=" ifname=$kdumpnic:$_netmac"
-        echo "$_ifname_opts" >> "$_ip_conf"
     fi
-
-    kdump_setup_dns "$_netdev" "$_conpath"
+    _save_kdump_netifs "$_netdev"
 
     if [[ ! -f ${initdir}/etc/cmdline.d/50neednet.conf ]]; then
         # network-manager module needs this parameter
         echo "rd.neednet" >> "${initdir}/etc/cmdline.d/50neednet.conf"
     fi
 
-    # Save netdev used for kdump as cmdline
-    # Whoever calling kdump_install_net() is setting up the default gateway,
-    # ie. bootdev/kdumpnic. So don't override the setting if calling
-    # kdump_install_net() for another time. For example, after setting eth0 as
-    # the default gate way for network dump, eth1 in the fence kdump path will
-    # call kdump_install_net again and we don't want eth1 to be the default
-    # gateway.
-    if [[ ! -f ${initdir}/etc/cmdline.d/60kdumpnic.conf ]] \
-        && [[ ! -f ${initdir}/etc/cmdline.d/70bootdev.conf ]]; then
+    if [[ ! -f ${initdir}/etc/cmdline.d/60kdumpnic.conf ]]; then
         echo "kdumpnic=$kdumpnic" > "${initdir}/etc/cmdline.d/60kdumpnic.conf"
-        echo "bootdev=$kdumpnic" > "${initdir}/etc/cmdline.d/70bootdev.conf"
     fi
 
+    if is_ipv6_address "$_srcaddr"; then
+        _ip_proc=6
+    else
+        _ip_proc=4
+    fi
+
+    echo "$_netdev" "$_ip_proc" >> "$_TMP_KDUMP_NETIFS_IPv46_USAGE"
 }
 
 # install etc/kdump/pre.d and /etc/kdump/post.d
@@ -1164,7 +991,7 @@ remove_cpu_online_rule() {
 }
 
 install() {
-    local arch
+    local arch _netifs
 
     kdump_module_init
     kdump_install_conf
@@ -1223,6 +1050,12 @@ install() {
     # nfs/ssh dump will need to get host ip in second kernel and need to call 'ip' tool, see get_host_ip for more detail
     if is_nfs_dump_target || is_ssh_dump_target; then
         inst "ip"
+    fi
+
+    _netifs=$(_get_kdump_netifs)
+    if [[ -n "$_netifs" ]]; then
+        kdump_install_nmconnections "$_netifs"
+        apply_nm_initrd_generator_timeouts
     fi
 
     # For the lvm type target under kdump, in /etc/lvm/lvm.conf we can
