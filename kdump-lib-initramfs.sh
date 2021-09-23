@@ -133,3 +133,17 @@ is_fs_dump_target()
 {
 	[ -n "$(kdump_get_conf_val "ext[234]\|xfs\|btrfs\|minix")" ]
 }
+
+kdump_get_ip_route()
+{
+	if ! _route=$(/sbin/ip -o route get to "$1" 2>&1); then
+		derror "Bad kdump network destination: $1"
+		exit 1
+	fi
+	echo "$_route"
+}
+
+kdump_get_ip_route_field()
+{
+	echo "$1" | sed -n -e "s/^.*\<$2\>\s\+\(\S\+\).*$/\1/p"
+}
