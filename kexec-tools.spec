@@ -108,6 +108,7 @@ Patch401: ./kexec-tools-2.0.23-s390_handle_R_390_PLT32DBL_reloc_entries_in_machi
 #
 # Patches 501 through 600 are meant for ARM kexec-tools enablement
 #
+Patch501: ./kexec-tools-2.0.23-arm64-kexec-arm64-add-support-for-R_AARCH64_LDST128_.patch
 
 #
 # Patches 601 onward are generic patches
@@ -130,6 +131,7 @@ tar -z -x -v -f %{SOURCE9}
 tar -z -x -v -f %{SOURCE19}
 
 %patch401 -p1
+%patch501 -p1
 %patch601 -p1
 
 %ifarch ppc
