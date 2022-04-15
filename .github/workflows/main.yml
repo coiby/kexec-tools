@@ -1,0 +1,53 @@
+name: kexec-tools tests
+
+on: pull_request
+
+jobs:
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: wget https://github.com/mvdan/sh/releases/download/v3.4.3/shfmt_v3.4.3_linux_amd64 -O /usr/local/bin/shfmt && chmod +x /usr/local/bin/shfmt
+      - run: shfmt -d *.sh kdumpctl mk*dumprd
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: curl -L -O https://github.com/koalaman/shellcheck/releases/download/v0.8.0/shellcheck-v0.8.0.linux.x86_64.tar.xz && tar -xJf shellcheck-v0.8.0.linux.x86_64.tar.xz
+      # Currently, for kexec-tools, there is need for shellcheck to require
+      # the sourced file to give correct warnings about the checked file
+      - run: shellcheck-v0.8.0/shellcheck --exclude=1090,1091 *.sh spec/*.sh kdumpctl mk*dumprd
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    container: docker.io/fedora:latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: sudo dnf install -y make dracut grubby hostname
+      - run: curl -L -O https://github.com/shellspec/shellspec/archive/latest.tar.gz && tar -xzf latest.tar.gz
+      - run: cd shellspec-latest && sudo make install
+      - run: shellspec
+
+  integration-tests:
+        runs-on: self-hosted
+        timeout-minutes: 45
+        concurrency:
+            group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.container }}-${{ matrix.test }}
+            cancel-in-progress: true
+        strategy:
+            matrix:
+                container: [
+                        "fedora:36",
+                ]
+            fail-fast: false
+        container:
+            image: ghcr.io/coiby/${{ matrix.container }}
+            options: "--privileged -v /dev:/dev -v /lib/modules:/lib/modules:ro"
+        steps:
+            -   name: "Checkout Repository"
+                uses: actions/checkout@v2
+                with:
+                    fetch-depth: 0
+            -   name: "${{ matrix.container }} kdump tests"
+                run: bash ./tools/run-integration-tests.sh
