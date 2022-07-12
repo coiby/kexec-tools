@@ -54,4 +54,10 @@ img_add_qemu_cmd() {
 
 [ -e "$INST_SCRIPT" ] && source $INST_SCRIPT
 
+if [[ $USE_GUESTMOUNT ]]; then
+	# unmount the image before renaming it otherwise sync_guestunmount may falsely
+	# think that the image has been truely unmounted
+	sync_guestunmount $OUTPUT_IMAGE.building ${MNTS[$OUTPUT_IMAGE.building]}
+fi
+
 mv $OUTPUT_IMAGE.building $OUTPUT_IMAGE
