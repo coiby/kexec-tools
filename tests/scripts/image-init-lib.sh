@@ -20,20 +20,64 @@ is_mounted()
        findmnt -k -n $1 &>/dev/null
 }
 
+is_qemu_image_locked()
+{
+	qemu-img info $1 2>&1 >/dev/null | grep -q "lock"
+}
+
+# call guestmount and wait for image is truely umounted.
+#
+# guestumount simply asks qemu to quit. When guesumount returns, qemu may still
+# in the quiting process. In this case, if we start a new qemu instance, it will
+# complain with 'Failed to get shared "write" lock'.
+sync_guestunmount() {
+	local i _image _mnt _wait_times
+
+	DEFAULT_TIMES=100
+	_image=$1
+	_mnt=$2
+	i=0
+
+	$SUDO LIBGUESTFS_BACKEND=direct guestunmount $_mnt
+
+	if [[ $GUEST_UNMOUNT_WAIT_TIMES ]]; then
+		_wait_times=$GUEST_UNMOUNT_WAIT_TIMES
+	else
+		_wait_times=$DEFAULT_TIMES
+	fi
+
+	# wait 10s at maximum for $_image to be available
+	while is_qemu_image_locked $_image && [[ $i -lt $_wait_times ]]; do
+		i=$[$i+1]
+		sleep 0.1
+	done
+
+	if [[ $i == $_wait_times ]]; then
+		perror_exit "After 0.1*$_wait_times seconds, $_image is still locked. You may need to increase GUEST_UNMOUNT_WAIT_TIMES (default=$DEFAULT_TIMES)"
+	fi
+}
+
 clean_up()
 {
-	for _mnt in ${MNTS[@]}; do
-		is_mounted $_mnt && $SUDO umount -f -R $_mnt
+	for _image in ${!MNTS[@]}; do
+		_mnt=${MNTS[$_image]}
+		if [[ $USE_GUESTMOUNT ]] && is_mounted $_mnt; then
+			sync_guestunmount $_image $_mnt
+		else
+			is_mounted $_mnt && $SUDO umount -f -R $_mnt
+		fi
+		rm $_image.lock
 	done
 
-	for _dev in ${DEVS[@]}; do
-		[ ! -e "$_dev" ] && continue
-		[[ "$_dev" == "/dev/loop"* ]] && $SUDO losetup -d "$_dev"
-		[[ "$_dev" == "/dev/nbd"* ]] && $SUDO qemu-nbd --disconnect "$_dev"
-	done
+	if [[ ! $USE_GUESTMOUNT ]]; then
+		for _dev in ${DEVS[@]}; do
+			[ ! -e "$_dev" ] && continue
+			[[ "$_dev" == "/dev/loop"* ]] && $SUDO losetup -d "$_dev"
+			[[ "$_dev" == "/dev/nbd"* ]] && $SUDO qemu-nbd --disconnect "$_dev"
+		done
+	fi
 
 	[ -d "$TMPDIR" ] && $SUDO rm --one-file-system -rf -- "$TMPDIR";
-
 	sync
 }
 
@@ -159,10 +203,11 @@ mount_image() {
 		[ $? -ne 0 ] || [ -z "$dev" ] && perror_exit "failed to setup loop device"
 
 	elif fmt_is_qcow2 "$fmt"; then
-		prepare_nbd
-
-		dev=$(mount_nbd $image)
-		[ $? -ne 0 ] || [ -z "$dev" ] perror_exit "failed to connect qemu to nbd device '$dev'"
+		if [[ ! $USE_GUESTMOUNT ]]; then
+			prepare_nbd
+			dev=$(mount_nbd $image)
+			[ $? -ne 0 ] || [ -z "$dev" ] perror_exit "failed to connect qemu to nbd device '$dev'"
+		fi
 	else
 		perror_exit "Unrecognized image format '$fmt'"
 	fi
@@ -172,16 +217,19 @@ mount_image() {
 	[ $? -ne 0 ] || [ -z "$mnt" ] && perror_exit "failed to create tmp mount dir"
 	MNTS[$image]="$mnt"
 
-	mnt_dev=$(get_mountable_dev "$dev")
-	[ $? -ne 0 ] || [ -z "$mnt_dev" ] && perror_exit "failed to setup loop device"
-
-	$SUDO mount $mnt_dev $mnt
-	[ $? -ne 0 ] && perror_exit "failed to mount device '$mnt_dev'"
-	boot=$(get_mount_boot "$dev")
-	if [[ -n "$boot" ]]; then
-		root=$(get_image_mount_root $image)
-		$SUDO mount $boot $root/boot
-		[ $? -ne 0 ] && perror_exit "failed to mount the bootable partition for device '$mnt_dev'"
+	if [[ $USE_GUESTMOUNT ]]; then
+		$SUDO LIBGUESTFS_BACKEND=direct guestmount -a $image -i $mnt
+	else
+		mnt_dev=$(get_mountable_dev "$dev")
+		[ $? -ne 0 ] || [ -z "$mnt_dev" ] && perror_exit "failed to setup loop device"
+		$SUDO mount $mnt_dev $mnt
+		[ $? -ne 0 ] && perror_exit "failed to mount device '$mnt_dev'"
+		boot=$(get_mount_boot "$dev")
+		if [[ -n "$boot" ]]; then
+			root=$(get_image_mount_root $image)
+			$SUDO mount $boot $root/boot
+			[ $? -ne 0 ] && perror_exit "failed to mount the bootable partition for device '$mnt_dev'"
+		fi
 	fi
 }
 
@@ -218,7 +266,7 @@ inst_pkg_in_image() {
 	# if [ "$distro" != "Fedora" ]; then
 	# 	perror_exit "only Fedora image is supported"
 	# fi
-	release=$(cat $root/etc/fedora-release | sed -n "s/.*[Rr]elease\s*\([0-9]*\).*/\1/p")
+	release=$(sudo cat $root/etc/fedora-release | sed -n "s/.*[Rr]elease\s*\([0-9]*\).*/\1/p")
 	[ $? -ne 0 ] || [ -z "$release" ] && perror_exit "only Fedora image is supported"
 
 	$SUDO dnf --releasever=$release --installroot=$root install -y $@
