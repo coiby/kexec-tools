@@ -86,10 +86,16 @@ build_test_image() {
 }
 
 run_test_sync() {
-	local qemu_cmd=$(get_test_qemu_cmd $1)
+	local qemu_cmd=$(get_test_qemu_cmd $1) _timeout
+
+	if [[ $KUMP_TEST_QEMU_TIMEOUT ]]; then
+		_timeout=$KUMP_TEST_QEMU_TIMEOUT
+	else
+		_timeout=10m
+	fi
 
 	if [ -n "$qemu_cmd" ]; then
-		timeout --foreground 10m $BASEDIR/run-qemu $(get_test_qemu_cmd $1)
+		timeout --foreground $_timeout $BASEDIR/run-qemu $(get_test_qemu_cmd $1)
 	else
 		echo "error: test qemu command line is not configured" > /dev/stderr
 		return 1
