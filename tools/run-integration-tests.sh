@@ -26,4 +26,4 @@ if ! can_we_use_qemu_nbd; then
 	USE_GUESTMOUNT=1
 fi
 
-KUMP_TEST_QEMU_TIMEOUT=20m USE_GUESTMOUNT=$USE_GUESTMOUNT BASE_IMAGE=/usr/share/cloud_images/Fedora-Cloud-Base-35-1.2.x86_64.qcow2 RELEASE=$VERSION_ID make test-run
+KUMP_TEST_QEMU_TIMEOUT=22m USE_GUESTMOUNT=1 BASE_IMAGE=/usr/share/cloud_images/Fedora-Cloud-Base-35-1.2.x86_64.qcow2 RELEASE=$VERSION_ID make test-run
