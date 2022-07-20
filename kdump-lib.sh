@@ -724,7 +724,7 @@ PROC_IOMEM=/proc/iomem
 get_system_size()
 {
 	sum=$(sed -n "s/\s*\([0-9a-fA-F]\+\)-\([0-9a-fA-F]\+\) : System RAM$/+ 0x\2 - 0x\1 + 1/p" $PROC_IOMEM)
-	echo $(( (sum) / 1024 / 1024 / 1024))
+	echo $(((sum) / 1024 / 1024 / 1024))
 }
 
 # Return the recommended size for the reserved crashkernel memory
@@ -822,7 +822,7 @@ get_luks_crypt_dev()
 
 	[[ -b /dev/block/$1 ]] || return 1
 
-	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" | \
+	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" |
 		sed -n -E "s/^TYPE=(.*)$/\1/p")
 	[[ $_type == "crypto_LUKS" ]] && echo "$1"
 
