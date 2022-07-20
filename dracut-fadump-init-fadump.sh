@@ -37,7 +37,7 @@ if [ -f /proc/device-tree/rtas/ibm,kernel-dump ] || [ -f /proc/device-tree/ibm,o
 				case $mp in
 				/oldroot/*) umount -d "$mp" && loop=1 ;;
 				esac
-			done </proc/mounts
+			done < /proc/mounts
 		done
 		umount -d -l oldroot
 
