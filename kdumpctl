@@ -643,7 +643,7 @@ function remove_kdump_kernel_key()
 
 function is_aws_aarch64()
 {
-	local _bios_model;
+	local _bios_model
 
 	_bios_model=$(lscpu | grep "BIOS Model name")
 	if [[ "${_bios_model}" =~ "AWS Graviton" ]]; then
