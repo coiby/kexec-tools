@@ -307,12 +307,12 @@ do_failure_action()
 do_final_action()
 {
 	dinfo "Executing final action $FINAL_ACTION"
-	eval $FINAL_ACTION
+	eval "$FINAL_ACTION"
 }
 
 do_dump()
 {
-	eval $DUMP_INSTRUCTION
+	eval "$DUMP_INSTRUCTION"
 	_ret=$?
 
 	if [ $_ret -ne 0 ]; then
@@ -393,7 +393,7 @@ dump_raw()
 dump_ssh()
 {
 	_ret=0
-	_ssh_opt="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
+	_ssh_opts="-i $1 -o BatchMode=yes -o StrictHostKeyChecking=yes"
 	_ssh_dir="$KDUMP_PATH/$HOST_IP-$DATEDIR"
 	if is_ipv6_address "$2"; then
 		_scp_address=${2%@*}@"[${2#*@}]"
@@ -404,29 +404,33 @@ dump_ssh()
 	dinfo "saving to $2:$_ssh_dir"
 
 	cat /var/lib/random-seed > /dev/urandom
-	ssh -q $_ssh_opt "$2" mkdir -p "$_ssh_dir" || return 1
+	# shellcheck disable=SC2086 # need to word-split $_ssh_opts
+	ssh -q $_ssh_opts "$2" mkdir -p "$_ssh_dir" || return 1
 
-	save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opt" "$2"
+	save_vmcore_dmesg_ssh "$DMESG_COLLECTOR" "$_ssh_dir" "$_ssh_opts" "$2"
 
 	dinfo "saving vmcore"
 
 	KDUMP_LOG_DEST=$2:$_ssh_dir/
-	KDUMP_LOG_OP="scp -q $_ssh_opt '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
+	KDUMP_LOG_OP="scp -q $_ssh_opts '$KDUMP_LOG_FILE' '$_scp_address:$_ssh_dir/'"
 
-	save_opalcore_ssh "$_ssh_dir" "$_ssh_opt" "$2" "$_scp_address"
+	save_opalcore_ssh "$_ssh_dir" "$_ssh_opts" "$2" "$_scp_address"
 
 	if [ "${CORE_COLLECTOR%%[[:blank:]]*}" = "scp" ]; then
-		scp -q $_ssh_opt /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
+		# shellcheck disable=SC2086 # need to word-split $_ssh_opts
+		scp -q $_ssh_opts /proc/vmcore "$_scp_address:$_ssh_dir/vmcore-incomplete"
 		_ret=$?
 		_vmcore="vmcore"
 	else
-		$CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opt "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
+		# shellcheck disable=SC2086 # need to word-split $_ssh_opts
+		$CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
 		_ret=$?
 		_vmcore="vmcore.flat"
 	fi
 
 	if [ $_ret -eq 0 ]; then
-		ssh $_ssh_opt "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
+		# shellcheck disable=SC2086 # need to word-split $_ssh_opts
+		ssh $_ssh_opts "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
 		_ret=$?
 		if [ $_ret -ne 0 ]; then
 			derror "moving vmcore failed, exitcode:$_ret"
@@ -457,11 +461,13 @@ save_opalcore_ssh()
 
 	dinfo "saving opalcore:$OPALCORE to $3:$1"
 
+	# shellcheck disable=SC2086 # need to word-split $2
 	if ! scp $2 $OPALCORE "$4:$1/opalcore-incomplete"; then
 		derror "saving opalcore failed"
 		return 1
 	fi
 
+	# shellcheck disable=SC2086 # need to word-split $2
 	ssh $2 "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
 	dinfo "saving opalcore complete"
 	return 0
@@ -474,6 +480,7 @@ save_opalcore_ssh()
 save_vmcore_dmesg_ssh()
 {
 	dinfo "saving vmcore-dmesg.txt to $4:$2"
+	# shellcheck disable=SC2086 # need to word-split $3
 	if $1 /proc/vmcore | ssh $3 "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
 		ssh -q $3 "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
 		dinfo "saving vmcore-dmesg.txt complete"
