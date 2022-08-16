@@ -980,10 +980,12 @@ kdump_install_systemd_conf() {
     # unneccessary memory consumption and make console output more useful.
     # Only do so for non fadump image.
     mkdir -p "${initdir}/etc/systemd/journald.conf.d"
-    echo "[Journal]" > "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "Storage=volatile" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "ReadKMsg=no" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "ForwardToConsole=yes" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
+    {
+        echo "[Journal]"
+        echo "Storage=volatile"
+        echo "ReadKMsg=no"
+        echo "ForwardToConsole=yes"
+    } > "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
 }
 
 remove_cpu_online_rule() {
