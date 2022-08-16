@@ -37,6 +37,7 @@ is_mounted()
 # $2: mount source type
 # $3: mount source
 # $4: extra args
+# shellcheck disable=SC2086 # $4 means extra args which nees to word-splitted
 get_mount_info()
 {
 	__kdump_mnt=$(findmnt -k -n -r -o "$1" "--$2" "$3" $4)
