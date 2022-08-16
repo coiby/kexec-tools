@@ -36,6 +36,7 @@ is_mounted()
 # $2: mount source type
 # $3: mount source
 # $4: extra args
+# shellcheck disable=SC2086 # $4 means extra args which nees to word-splitted
 get_mount_info()
 {
 	__kdump_mnt=$(findmnt -k -n -r -o "$1" "--$2" "$3" $4)
@@ -58,13 +59,13 @@ is_fs_type_nfs()
 # If $1 contains dracut_args "--mount", return <filesystem type>
 get_dracut_args_fstype()
 {
-	echo $1 | grep "\-\-mount" | sed "s/.*--mount .\(.*\)/\1/" | cut -d' ' -f3
+	echo "$1" | grep "\-\-mount" | sed "s/.*--mount .\(.*\)/\1/" | cut -d' ' -f3
 }
 
 # If $1 contains dracut_args "--mount", return <device>
 get_dracut_args_target()
 {
-	echo $1 | grep "\-\-mount" | sed "s/.*--mount .\(.*\)/\1/" | cut -d' ' -f1
+	echo "$1" | grep "\-\-mount" | sed "s/.*--mount .\(.*\)/\1/" | cut -d' ' -f1
 }
 
 get_save_path()
