@@ -1024,6 +1024,7 @@ get_kernel_size()
 		try_decompress '(\265/\375' xxx unzstd "$img" "$tmp"
 
 	# Finally check for uncompressed images or objects:
+	# shellcheck disable=SC2181 # to improve readability
 	[[ $? -eq 0 ]] && get_vmlinux_size "$tmp" && return 0
 
 	# Fallback to use iomem
