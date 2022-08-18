@@ -425,6 +425,7 @@ is_dracut_mod_omitted()
 {
 	local dracut_mod=$1
 
+	# shellcheck disable=SC2046 # a known issue https://github.com/koalaman/shellcheck/issues/2335
 	set -- $(kdump_get_conf_val dracut_args)
 	while [ $# -gt 0 ]; do
 		case $1 in
