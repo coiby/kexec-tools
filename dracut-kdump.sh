@@ -422,14 +422,14 @@ dump_ssh()
 		_ret=$?
 		_vmcore="vmcore"
 	else
-		# shellcheck disable=SC2086 # need to word-split $_ssh_opts
+		# shellcheck disable=SC2086,SC2029 # need to word-split $_ssh_opts and expand $_ssh_dir
 		$CORE_COLLECTOR /proc/vmcore | ssh $_ssh_opts "$2" "umask 0077 && dd bs=512 of='$_ssh_dir/vmcore-incomplete'"
 		_ret=$?
 		_vmcore="vmcore.flat"
 	fi
 
 	if [ $_ret -eq 0 ]; then
-		# shellcheck disable=SC2086 # need to word-split $_ssh_opts
+		# shellcheck disable=SC2086,SC2029 # need to word-split $_ssh_opts and expand $_ssh_dir
 		ssh $_ssh_opts "$2" "mv '$_ssh_dir/vmcore-incomplete' '$_ssh_dir/$_vmcore'"
 		_ret=$?
 		if [ $_ret -ne 0 ]; then
@@ -467,7 +467,7 @@ save_opalcore_ssh()
 		return 1
 	fi
 
-	# shellcheck disable=SC2086 # need to word-split $2
+	# shellcheck disable=SC2086,SC2029 # need to word-split $1 and expand $2
 	ssh $2 "$3" mv "$1/opalcore-incomplete" "$1/opalcore"
 	dinfo "saving opalcore complete"
 	return 0
@@ -480,7 +480,7 @@ save_opalcore_ssh()
 save_vmcore_dmesg_ssh()
 {
 	dinfo "saving vmcore-dmesg.txt to $4:$2"
-	# shellcheck disable=SC2086 # need to word-split $3
+	# shellcheck disable=SC2086,SC2029 # need to word-split $3 and expand $2
 	if $1 /proc/vmcore | ssh $3 "$4" "umask 0077 && dd of='$2/vmcore-dmesg-incomplete.txt'"; then
 		ssh -q $3 "$4" mv "$2/vmcore-dmesg-incomplete.txt" "$2/vmcore-dmesg.txt"
 		dinfo "saving vmcore-dmesg.txt complete"
