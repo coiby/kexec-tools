@@ -4,9 +4,10 @@
 # not be the default shell. Any code added must be POSIX compliant.
 
 DEFAULT_PATH="/var/crash/"
+# shellcheck disable=SC2034
 DEFAULT_SSHKEY="/root/.ssh/kdump_id_rsa"
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
-FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
+# shellcheck disable=SC2034
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 
 # Read kdump config in well formated style
