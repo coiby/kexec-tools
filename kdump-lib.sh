@@ -8,6 +8,8 @@ else
 	. /lib/kdump/kdump-lib-initramfs.sh
 fi
 
+# shellcheck disable=SC2034
+FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 
 is_fadump_capable()
@@ -430,7 +432,7 @@ get_ifcfg_filename()
 # returns 1 otherwise
 is_dracut_mod_omitted()
 {
-	local dracut_args dracut_mod=$1
+	local dracut_mod=$1
 
 	set -- $(kdump_get_conf_val dracut_args)
 	while [ $# -gt 0 ]; do
@@ -751,8 +753,10 @@ prepare_kdump_bootinfo()
 	if [[ ! -w $KDUMP_BOOTDIR ]]; then
 		var_target_initrd_dir="/var/lib/kdump"
 		mkdir -p "$var_target_initrd_dir"
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$var_target_initrd_dir/$kdump_initrd_base"
 	else
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$KDUMP_BOOTDIR/$kdump_initrd_base"
 	fi
 }
