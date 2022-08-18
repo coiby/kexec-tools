@@ -261,7 +261,7 @@ kdump_get_persistent_dev()
 		dev=$(blkid -L "${dev#LABEL=}")
 		;;
 	esac
-	echo $(get_persistent_dev "$dev")
+	get_persistent_dev "$dev"
 }
 
 is_ostree()
