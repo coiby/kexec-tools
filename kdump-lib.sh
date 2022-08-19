@@ -527,10 +527,10 @@ remove_cmdline_param()
 #
 get_bootcpu_apicid()
 {
-	awk '                                                       \
-        BEGIN { CPU = "-1"; }                                   \
-        $1=="processor" && $2==":"      { CPU = $NF; }          \
-        CPU=="0" && /^apicid/           { print $NF; }          \
+	awk '
+        BEGIN { CPU = "-1"; }
+        $1=="processor" && $2==":"      { CPU = $NF; }
+        CPU=="0" && /^apicid/           { print $NF; }
         ' \
 		/proc/cpuinfo
 }
