@@ -183,7 +183,7 @@ get_bind_mount_source()
 	local _fsroot _src_nofsroot
 
 	_mnt=$(df "$1" | tail -1 | awk '{print $NF}')
-	_path=${1#$_mnt}
+	_path=${1#"$_mnt"}
 
 	_src=$(get_mount_info SOURCE target "$_mnt" -f)
 	_opt=$(get_mount_info OPTIONS target "$_mnt" -f)
@@ -200,7 +200,7 @@ get_bind_mount_source()
 		echo "$_mnt$_path" && return
 	fi
 
-	_fsroot=${_src#${_src_nofsroot}[}
+	_fsroot=${_src#"${_src_nofsroot}"[}
 	_fsroot=${_fsroot%]}
 	_mnt=$(get_mount_info TARGET source "$_src_nofsroot" -f)
 
@@ -209,7 +209,7 @@ get_bind_mount_source()
 		local _subvol
 		_subvol=${_opt#*subvol=}
 		_subvol=${_subvol%,*}
-		_fsroot=${_fsroot#$_subvol}
+		_fsroot=${_fsroot#"$_subvol"}
 	fi
 	echo "$_mnt$_fsroot$_path"
 }
