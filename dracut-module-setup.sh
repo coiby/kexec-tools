@@ -262,17 +262,17 @@ kdump_static_ip() {
         echo -n "${_srcaddr}::${_gateway}:${_netmask}::"
     fi
 
-    /sbin/ip $_ipv6_flag route show | grep -v default \
-        | grep ".*via.* $_netdev " | grep -v "^[[:space:]]*nexthop" \
-        | while read -r _route; do
-            _target=$(echo "$_route" | awk '{print $1}')
-            _nexthop=$(echo "$_route" | awk '{print $3}')
-            if [[ "x" != "x"$_ipv6_flag ]]; then
-                _target="[$_target]"
-                _nexthop="[$_nexthop]"
-            fi
-            echo "rd.route=$_target:$_nexthop:$kdumpnic"
-        done >> "${initdir}/etc/cmdline.d/45route-static.conf"
+    while read -r _route; do
+        _target=$(echo "$_route" | awk '{print $1}')
+        _nexthop=$(echo "$_route" | awk '{print $3}')
+        if [[ "x" != "x"$_ipv6_flag ]]; then
+            _target="[$_target]"
+            _nexthop="[$_nexthop]"
+        fi
+        echo "rd.route=$_target:$_nexthop:$kdumpnic"
+    done >> "${initdir}/etc/cmdline.d/45route-static.conf" \
+        < <(/sbin/ip $_ipv6_flag route show | grep -v default \
+            | grep ".*via.* $_netdev " | grep -v "^[[:space:]]*nexthop")
 
     kdump_handle_mulitpath_route "$_netdev" "$_srcaddr" "$kdumpnic"
 }
