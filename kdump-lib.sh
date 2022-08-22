@@ -852,7 +852,7 @@ get_recommend_size()
 	while read -r -d , range; do
 		# need to use non-default IFS as double spaces are used as a
 		# single delimiter while commas aren't...
-		IFS=, read start start_unit end end_unit size <<< \
+		IFS=, read -r start start_unit end end_unit size <<< \
 			"$(echo "$range" | sed -n "s/\([0-9]\+\)\([GT]\?\)-\([0-9]*\)\([GT]\?\):\([0-9]\+[MG]\)/\1,\2,\3,\4,\5/p")"
 
 		# aka. 102400T
@@ -874,6 +874,7 @@ get_recommend_size()
 
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
+# shellcheck disable=SC2120 # kdumpctl will call this func with an argument
 kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
