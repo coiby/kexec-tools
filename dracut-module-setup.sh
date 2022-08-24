@@ -379,7 +379,7 @@ kdump_setup_bond() {
     local _netdev="$1"
     local _conpath="$2"
     local _dev _mac _slaves _kdumpdev _bondoptions
-    for _dev in $(cat "/sys/class/net/$_netdev/bonding/slaves"); do
+    for _dev in $(< "/sys/class/net/$_netdev/bonding/slaves"); do
         _mac=$(kdump_get_perm_addr "$_dev")
         _kdumpdev=$(kdump_setup_ifname "$_dev")
         echo -n " ifname=$_kdumpdev:$_mac" >> "${initdir}/etc/cmdline.d/42bond.conf"
