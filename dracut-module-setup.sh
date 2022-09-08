@@ -360,6 +360,24 @@ kdump_setup_ifname() {
     echo "$_ifname"
 }
 
+use_ipv4_or_ipv6() {
+    local _netif=$1 _uuid=$2
+
+    if [[ -v "ipv4_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv4.may-fail no &> >(ddebug)
+    fi
+
+    if [[ -v "ipv6_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv6.may-fail no &> >(ddebug)
+    fi
+
+    if [[ -v "ipv4_usage[$_netif]" ]] && [[ ! -v "ipv6_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv6.method disabled &> >(ddebug)
+    elif [[ ! -v "ipv4_usage[$_netif]" ]] && [[ -v "ipv6_usage[$_netif]" ]]; then
+        nmcli connection modify --temporary "$_uuid" ipv4.method disabled &> >(ddebug)
+    fi
+}
+
 _clone_nmconnection() {
     local _clone_output _name _unique_id
 
@@ -390,6 +408,8 @@ clone_and_modify_nmconnections() {
             exit 1
         fi
 
+        use_ipv4_or_ipv6 "$_dev" "$_uuid"
+
         _cloned_nmconnection_file_path=$(nmcli --get-values UUID,FILENAME connection show | sed -n "s/^${_uuid}://p")
         _tmp_nmconnection_file_path=$_DRACUT_KDUMP_NM_TMP_DIR/$(basename "$_nmconnection_file_path")
         cp "$_cloned_nmconnection_file_path" "$_tmp_nmconnection_file_path"
@@ -413,7 +433,6 @@ _install_nmconnections() {
     done
 }
 
-
 kdump_install_nmconnections() {
     declare -A nmconnection_map ipv4_usage ipv6_usage
     local _netifs _netif
@@ -425,10 +444,18 @@ kdump_install_nmconnections() {
     done
 
     while IFS=: read -r _netif _nmconn; do
-        if [[ -v "nmconnection_map[$_netif]" ]] ; then
+        if [[ -v "nmconnection_map[$_netif]" ]]; then
             nmconnection_map[$_netif]="$_nmconn"
         fi
     done <<< "$(nmcli -t -f device,filename connection show --active)"
+
+    while read -r _netif _ip_proc; do
+        if [[ $_ip_proc == 6 ]]; then
+            ipv6_usage[$_netif]=1
+        elif [[ $_ip_proc == 4 ]]; then
+            ipv4_usage[$_netif]=1
+        fi
+    done < "$_TMP_KDUMP_NETIFS_IPv46_USAGE"
 
     clone_and_modify_nmconnections
     _install_nmconnections
