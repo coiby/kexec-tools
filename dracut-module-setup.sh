@@ -477,6 +477,11 @@ kdump_install_nmconnections() {
 
     clone_and_modify_nmconnections
     _install_nmconnections
+
+    # Stop dracut 35network-manger to calling nm-initrd-generator.
+    # Note this line of code can be removed after NetworkManager >= 1.35.2
+    # gets released.
+    echo > "${initdir}/usr/libexec/nm-initrd-generator"
 }
 
 kdump_setup_bridge() {
