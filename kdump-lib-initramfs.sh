@@ -9,6 +9,7 @@ DEFAULT_SSHKEY="/root/.ssh/kdump_id_rsa"
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
 # shellcheck disable=SC2034
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
+LVM_CONF="/etc/lvm/lvm.conf"
 
 # Read kdump config in well formated style
 kdump_read_conf()
