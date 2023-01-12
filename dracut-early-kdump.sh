@@ -40,6 +40,9 @@ early_kdump_load()
 	if check_current_kdump_status; then
 		return 1
 	fi
+    if is_kernel_loaded "kdump"; then
+        return 1
+    fi
 
 	prepare_parameters
 
