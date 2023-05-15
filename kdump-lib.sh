@@ -13,6 +13,17 @@ FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 
+is_uki()
+{
+	local img
+
+	img="$1"
+
+	[[ -f "$img" ]] || return
+	[[ "$(file -b --mime-type "$img")" == application/x-dosexec ]] || return
+	objdump -h -j .linux "$img" &> /dev/null
+}
+
 is_fadump_capable()
 {
 	# Check if firmware-assisted dump is enabled
@@ -491,7 +502,9 @@ prepare_kdump_kernel()
 	read -r machine_id < /etc/machine-id
 
 	boot_dirlist=${KDUMP_BOOTDIR:-"/boot /boot/efi /efi /"}
-	boot_imglist="$KDUMP_IMG-$kdump_kernelver$KDUMP_IMG_EXT $machine_id/$kdump_kernelver/$KDUMP_IMG"
+	boot_imglist="$KDUMP_IMG-$kdump_kernelver$KDUMP_IMG_EXT \
+		$machine_id/$kdump_kernelver/$KDUMP_IMG \
+		EFI/Linux/$machine_id-$kdump_kernelver.efi"
 
 	# The kernel of OSTree based systems is not in the standard locations.
 	if is_ostree; then
@@ -564,7 +577,11 @@ prepare_kdump_bootinfo()
 	fi
 
 	# Set KDUMP_BOOTDIR to where kernel image is stored
-	KDUMP_BOOTDIR=$(dirname "$KDUMP_KERNEL")
+	if is_uki "$KDUMP_KERNEL"; then
+		KDUMP_BOOTDIR=/boot
+	else
+		KDUMP_BOOTDIR=$(dirname "$KDUMP_KERNEL")
+	fi
 
 	# Default initrd should just stay aside of kernel image, try to find it in KDUMP_BOOTDIR
 	boot_initrdlist="initramfs-$KDUMP_KERNELVER.img initrd"
@@ -719,6 +736,11 @@ prepare_cmdline()
 	# may cause the hot-remove of some pci hotplug device.
 	is_aws_aarch64 && out=$(echo "$out" | sed -e "/\<irqpoll\>//")
 
+	# Always disable gpt-auto-generator as it hangs during boot of the
+	# crash kernel. Furthermore we know which disk will be used for dumping
+	# (if at all) and add it explicitly.
+	is_uki "$KDUMP_KERNEL" && out+="rd.systemd.gpt_auto=no "
+
 	# Trim unnecessary whitespaces
 	echo "$out" | sed -e "s/^ *//g" -e "s/ *$//g" -e "s/ \+/ /g"
 }
@@ -857,77 +879,4 @@ get_all_kdump_crypt_dev()
 	for _dev in $(get_block_dump_target); do
 		get_luks_crypt_dev "$(kdump_get_maj_min "$_dev")"
 	done
-}
-
-check_vmlinux()
-{
-	# Use readelf to check if it's a valid ELF
-	readelf -h "$1" &> /dev/null || return 1
-}
-
-get_vmlinux_size()
-{
-	local size=0 _msize
-
-	while read -r _msize; do
-		size=$((size + _msize))
-	done <<< "$(readelf -l -W "$1" | awk '/^  LOAD/{print $6}' 2> /dev/stderr)"
-
-	echo $size
-}
-
-try_decompress()
-{
-	# The obscure use of the "tr" filter is to work around older versions of
-	# "grep" that report the byte offset of the line instead of the pattern.
-
-	# Try to find the header ($1) and decompress from here
-	for pos in $(tr "$1\n$2" "\n$2=" < "$4" | grep -abo "^$2"); do
-		if ! type -P "$3" > /dev/null; then
-			ddebug "Signiature detected but '$3' is missing, skip this decompressor"
-			break
-		fi
-
-		pos=${pos%%:*}
-		tail "-c+$pos" "$img" | $3 > "$5" 2> /dev/null
-		if check_vmlinux "$5"; then
-			ddebug "Kernel is extracted with '$3'"
-			return 0
-		fi
-	done
-
-	return 1
-}
-
-# Borrowed from linux/scripts/extract-vmlinux
-get_kernel_size()
-{
-	# Prepare temp files:
-	local tmp img=$1
-
-	tmp=$(mktemp /tmp/vmlinux-XXX)
-	trap 'rm -f "$tmp"' 0
-
-	# Try to check if it's a vmlinux already
-	check_vmlinux "$img" && get_vmlinux_size "$img" && return 0
-
-	# That didn't work, so retry after decompression.
-	try_decompress '\037\213\010' xy gunzip "$img" "$tmp" ||
-		try_decompress '\3757zXZ\000' abcde unxz "$img" "$tmp" ||
-		try_decompress 'BZh' xy bunzip2 "$img" "$tmp" ||
-		try_decompress '\135\0\0\0' xxx unlzma "$img" "$tmp" ||
-		try_decompress '\211\114\132' xy 'lzop -d' "$img" "$tmp" ||
-		try_decompress '\002!L\030' xxx 'lz4 -d' "$img" "$tmp" ||
-		try_decompress '(\265/\375' xxx unzstd "$img" "$tmp"
-
-	# Finally check for uncompressed images or objects:
-	# shellcheck disable=SC2181 # to improve readability
-	[[ $? -eq 0 ]] && get_vmlinux_size "$tmp" && return 0
-
-	# Fallback to use iomem
-	local _size=0 _seg
-	while read -r _seg; do
-		_size=$((_size + 0x${_seg#*-} - 0x${_seg%-*}))
-	done <<< "$(grep -E "Kernel (code|rodata|data|bss)" /proc/iomem | cut -d ":" -f 1)"
-	echo $_size
 }

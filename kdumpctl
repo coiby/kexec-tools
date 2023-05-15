@@ -45,6 +45,13 @@ if ! dlog_init; then
 	exit 1
 fi
 
+KDUMP_TMPDIR=$(mktemp -d kdump.XXXX)
+trap '
+    ret=$?;
+    rm -rf "$KDUMP_TMPDIR"
+    exit $ret;
+    ' EXIT
+
 _get_dracut_arg()
 {
 	local shortopt longopt n tmp
@@ -687,7 +694,7 @@ function remove_kdump_kernel_key()
 # as the currently running kernel.
 load_kdump()
 {
-	local ret
+	local ret uki
 
 	KEXEC_ARGS=$(prepare_kexec_args "${KEXEC_ARGS}")
 	KDUMP_COMMANDLINE=$(prepare_cmdline "${KDUMP_COMMANDLINE}" "${KDUMP_COMMANDLINE_REMOVE}" "${KDUMP_COMMANDLINE_APPEND}")
@@ -698,6 +705,16 @@ load_kdump()
 		dinfo "Secure Boot is enabled. Using kexec file based syscall."
 		KEXEC_ARGS="$KEXEC_ARGS -s"
 		load_kdump_kernel_key
+	fi
+
+	if is_uki "$KDUMP_KERNEL"; then
+		uki=$KDUMP_KERNEL
+		KDUMP_KERNEL=$KDUMP_TMPDIR/vmlinuz
+		objcopy -O binary --only-section .linux "$uki" "$KDUMP_KERNEL"
+		sync -f "$KDUMP_KERNEL"
+		# Make sure the temp file has the correct SELinux label.
+		# Otherwise starting the kdump.service will fail.
+		chcon -t boot_t "$KDUMP_KERNEL"
 	fi
 
 	ddebug "$KEXEC $KEXEC_ARGS $standard_kexec_args --command-line=$KDUMP_COMMANDLINE --initrd=$TARGET_INITRD $KDUMP_KERNEL"
@@ -1147,6 +1164,77 @@ rebuild()
 	rebuild_initrd
 }
 
+check_vmlinux()
+{
+	# Use readelf to check if it's a valid ELF
+	readelf -h "$1" &> /dev/null || return 1
+}
+
+get_vmlinux_size()
+{
+	local size=0 _msize
+
+	while read -r _msize; do
+		size=$((size + _msize))
+	done <<< "$(readelf -l -W "$1" | awk '/^  LOAD/{print $6}' 2> /dev/stderr)"
+
+	echo $size
+}
+
+try_decompress()
+{
+	# The obscure use of the "tr" filter is to work around older versions of
+	# "grep" that report the byte offset of the line instead of the pattern.
+
+	# Try to find the header ($1) and decompress from here
+	for pos in $(tr "$1\n$2" "\n$2=" < "$4" | grep -abo "^$2"); do
+		if ! type -P "$3" > /dev/null; then
+			ddebug "Signiature detected but '$3' is missing, skip this decompressor"
+			break
+		fi
+
+		pos=${pos%%:*}
+		tail "-c+$pos" "$img" | $3 > "$5" 2> /dev/null
+		if check_vmlinux "$5"; then
+			ddebug "Kernel is extracted with '$3'"
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+# Borrowed from linux/scripts/extract-vmlinux
+get_kernel_size()
+{
+	# Prepare temp files:
+	local tmp img=$1
+
+	tmp="$KDUMP_TMPDIR/vmlinux"
+
+	# Try to check if it's a vmlinux already
+	check_vmlinux "$img" && get_vmlinux_size "$img" && return 0
+
+	# That didn't work, so retry after decompression.
+	try_decompress '\037\213\010' xy gunzip "$img" "$tmp" ||
+		try_decompress '\3757zXZ\000' abcde unxz "$img" "$tmp" ||
+		try_decompress 'BZh' xy bunzip2 "$img" "$tmp" ||
+		try_decompress '\135\0\0\0' xxx unlzma "$img" "$tmp" ||
+		try_decompress '\211\114\132' xy 'lzop -d' "$img" "$tmp" ||
+		try_decompress '\002!L\030' xxx 'lz4 -d' "$img" "$tmp" ||
+		try_decompress '(\265/\375' xxx unzstd "$img" "$tmp"
+
+	# Finally check for uncompressed images or objects:
+	[[ $? -eq 0 ]] && get_vmlinux_size "$tmp" && return 0
+
+	# Fallback to use iomem
+	local _size=0 _seg
+	while read -r _seg; do
+		_size=$((_size + 0x${_seg#*-} - 0x${_seg%-*}))
+	done <<< "$(grep -E "Kernel (code|rodata|data|bss)" /proc/iomem | cut -d ":" -f 1)"
+	echo $_size
+}
+
 do_estimate()
 {
 	local kdump_mods
@@ -1318,7 +1406,7 @@ _filter_grubby_kernel_str()
 _find_kernel_path_by_release()
 {
 	local _release="$1" _grubby_kernel_str _kernel_path
-	_grubby_kernel_str=$(grubby --info ALL | grep "^kernel=.*$_release\"$")
+	_grubby_kernel_str=$(grubby --info ALL | grep -E "^kernel=.*$_release(\/\w+)?\"$")
 	_kernel_path=$(_filter_grubby_kernel_str "$_grubby_kernel_str")
 	if [[ -z $_kernel_path ]]; then
 		ddebug "kernel $_release doesn't exist"
