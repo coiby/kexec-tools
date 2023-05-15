@@ -8,6 +8,8 @@ else
 	. /lib/kdump/kdump-lib-initramfs.sh
 fi
 
+# shellcheck disable=SC2034
+FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
 FADUMP_ENABLED_SYS_NODE="/sys/kernel/fadump_enabled"
 FADUMP_REGISTER_SYS_NODE="/sys/kernel/fadump_registered"
 
@@ -186,7 +188,7 @@ get_bind_mount_source()
 	local _fsroot _src_nofsroot
 
 	_mnt=$(df "$1" | tail -1 | awk '{print $NF}')
-	_path=${1#$_mnt}
+	_path=${1#"$_mnt"}
 
 	_src=$(get_mount_info SOURCE target "$_mnt" -f)
 	_opt=$(get_mount_info OPTIONS target "$_mnt" -f)
@@ -203,7 +205,7 @@ get_bind_mount_source()
 		echo "$_mnt$_path" && return
 	fi
 
-	_fsroot=${_src#${_src_nofsroot}[}
+	_fsroot=${_src#"${_src_nofsroot}"[}
 	_fsroot=${_fsroot%]}
 	_mnt=$(get_mount_info TARGET source "$_src_nofsroot" -f)
 
@@ -212,7 +214,7 @@ get_bind_mount_source()
 		local _subvol
 		_subvol=${_opt#*subvol=}
 		_subvol=${_subvol%,*}
-		_fsroot=${_fsroot#$_subvol}
+		_fsroot=${_fsroot#"$_subvol"}
 	fi
 	echo "$_mnt$_fsroot$_path"
 }
@@ -259,7 +261,7 @@ kdump_get_persistent_dev()
 		dev=$(blkid -L "${dev#LABEL=}")
 		;;
 	esac
-	echo $(get_persistent_dev "$dev")
+	get_persistent_dev "$dev"
 }
 
 is_ostree()
@@ -389,10 +391,10 @@ is_kernel_loaded()
 #
 get_bootcpu_apicid()
 {
-	awk '                                                       \
-        BEGIN { CPU = "-1"; }                                   \
-        $1=="processor" && $2==":"      { CPU = $NF; }          \
-        CPU=="0" && /^apicid/           { print $NF; }          \
+	awk '
+        BEGIN { CPU = "-1"; }
+        $1=="processor" && $2==":"      { CPU = $NF; }
+        CPU=="0" && /^apicid/           { print $NF; }
         ' \
 		/proc/cpuinfo
 }
@@ -589,8 +591,10 @@ prepare_kdump_bootinfo()
 	if [[ ! -w $KDUMP_BOOTDIR ]]; then
 		var_target_initrd_dir="/var/lib/kdump"
 		mkdir -p "$var_target_initrd_dir"
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$var_target_initrd_dir/$kdump_initrd_base"
 	else
+		# shellcheck disable=SC2034 # KDUMP_INITRD is used by kdumpctl
 		KDUMP_INITRD="$KDUMP_BOOTDIR/$kdump_initrd_base"
 	fi
 }
@@ -724,7 +728,7 @@ PROC_IOMEM=/proc/iomem
 get_system_size()
 {
 	sum=$(sed -n "s/\s*\([0-9a-fA-F]\+\)-\([0-9a-fA-F]\+\) : System RAM$/+ 0x\2 - 0x\1 + 1/p" $PROC_IOMEM)
-	echo $(( (sum) / 1024 / 1024 / 1024))
+	echo $(((sum) / 1024 / 1024 / 1024))
 }
 
 # Return the recommended size for the reserved crashkernel memory
@@ -743,7 +747,7 @@ get_recommend_size()
 	while read -r -d , range; do
 		# need to use non-default IFS as double spaces are used as a
 		# single delimiter while commas aren't...
-		IFS=, read start start_unit end end_unit size <<< \
+		IFS=, read -r start start_unit end end_unit size <<< \
 			"$(echo "$range" | sed -n "s/\([0-9]\+\)\([GT]\?\)-\([0-9]*\)\([GT]\?\):\([0-9]\+[MG]\)/\1,\2,\3,\4,\5/p")"
 
 		# aka. 102400T
@@ -765,6 +769,7 @@ get_recommend_size()
 
 # get default crashkernel
 # $1 dump mode, if not specified, dump_mode will be judged by is_fadump_capable
+# shellcheck disable=SC2120 # kdumpctl will call this func with an argument
 kdump_get_arch_recommend_crashkernel()
 {
 	local _arch _ck_cmdline _dump_mode
@@ -822,7 +827,7 @@ get_luks_crypt_dev()
 
 	[[ -b /dev/block/$1 ]] || return 1
 
-	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" | \
+	_type=$(blkid -u filesystem,crypto -o export -- "/dev/block/$1" |
 		sed -n -E "s/^TYPE=(.*)$/\1/p")
 	[[ $_type == "crypto_LUKS" ]] && echo "$1"
 
@@ -916,6 +921,7 @@ get_kernel_size()
 		try_decompress '(\265/\375' xxx unzstd "$img" "$tmp"
 
 	# Finally check for uncompressed images or objects:
+	# shellcheck disable=SC2181 # to improve readability
 	[[ $? -eq 0 ]] && get_vmlinux_size "$tmp" && return 0
 
 	# Fallback to use iomem

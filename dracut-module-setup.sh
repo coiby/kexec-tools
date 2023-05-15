@@ -11,6 +11,7 @@ _get_kdump_netifs() {
 }
 
 kdump_module_init() {
+    # shellcheck disable=SC2154 # $initdir is a dracut variable
     if ! [[ -d "${initdir}/tmp" ]]; then
         mkdir -p "${initdir}/tmp"
     fi
@@ -21,6 +22,7 @@ kdump_module_init() {
 }
 
 check() {
+    # shellcheck disable=SC2154 # $debug is a dracut variable
     [[ $debug ]] && set -x
     #kdumpctl sets this explicitly
     if [[ -z $IN_KDUMP ]] || [[ ! -f /etc/kdump.conf ]]; then
@@ -35,6 +37,7 @@ depends() {
     kdump_module_init
 
     add_opt_module() {
+        # shellcheck disable=SC2154 # $omit_dracutmodules is a dracut variable
         [[ " $omit_dracutmodules " != *\ $1\ * ]] && _dep="$_dep $1"
     }
 
@@ -823,6 +826,7 @@ kdump_check_iscsi_targets() {
         [[ -d iscsi_session ]] && kdump_setup_iscsi_device "$PWD"
     }
 
+    # shellcheck disable=SC2154 # $hostonly and $mount_needs are from dracut
     [[ $hostonly ]] || [[ $mount_needs ]] && {
         for_each_host_dev_and_slaves_all kdump_check_setup_iscsi
     }
@@ -877,6 +881,7 @@ get_pcs_fence_kdump_nodes() {
     for node in ${nodelist}; do
         # convert $node from 'uname="nodeX"' to 'nodeX'
         eval "$node"
+        # shellcheck disable=SC2154 # $uname from dracut
         nodename="$uname"
         # Skip its own node name
         if is_localhost "$nodename"; then
@@ -975,10 +980,12 @@ kdump_install_systemd_conf() {
     # unneccessary memory consumption and make console output more useful.
     # Only do so for non fadump image.
     mkdir -p "${initdir}/etc/systemd/journald.conf.d"
-    echo "[Journal]" > "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "Storage=volatile" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "ReadKMsg=no" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
-    echo "ForwardToConsole=yes" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
+    {
+        echo "[Journal]"
+        echo "Storage=volatile"
+        echo "ReadKMsg=no"
+        echo "ForwardToConsole=yes"
+    } > "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
 }
 
 remove_cpu_online_rule() {
@@ -1011,6 +1018,7 @@ install() {
         kdump_install_random_seed
     fi
     dracut_install -o /etc/adjtime /etc/localtime
+    # shellcheck disable=SC2154 # $uname and ${initdir} from dracut
     inst "$moddir/monitor_dd_progress" "/kdumpscripts/monitor_dd_progress"
     chmod +x "${initdir}/kdumpscripts/monitor_dd_progress"
     inst "/bin/dd" "/bin/dd"
@@ -1030,6 +1038,7 @@ install() {
     inst "/lib/kdump/kdump-lib-initramfs.sh" "/lib/kdump-lib-initramfs.sh"
     inst "/lib/kdump/kdump-logger.sh" "/lib/kdump-logger.sh"
     inst "$moddir/kdump.sh" "/usr/bin/kdump.sh"
+    # shellcheck disable=SC2154 # $systemdsystemunitdir from dracut
     inst "$moddir/kdump-capture.service" "$systemdsystemunitdir/kdump-capture.service"
     systemctl -q --root "$initdir" add-wants initrd.target kdump-capture.service
     # Replace existing emergency service and emergency target

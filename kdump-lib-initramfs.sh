@@ -4,9 +4,10 @@
 # not be the default shell. Any code added must be POSIX compliant.
 
 DEFAULT_PATH="/var/crash/"
+# shellcheck disable=SC2034
 DEFAULT_SSHKEY="/root/.ssh/kdump_id_rsa"
 KDUMP_CONFIG_FILE="/etc/kdump.conf"
-FENCE_KDUMP_CONFIG_FILE="/etc/sysconfig/fence_kdump"
+# shellcheck disable=SC2034
 FENCE_KDUMP_SEND="/usr/libexec/fence_kdump_send"
 LVM_CONF="/etc/lvm/lvm.conf"
 
@@ -37,6 +38,7 @@ is_mounted()
 # $2: mount source type
 # $3: mount source
 # $4: extra args
+# shellcheck disable=SC2086 # $4 means extra args which nees to word-splitted
 get_mount_info()
 {
 	__kdump_mnt=$(findmnt -k -n -r -o "$1" "--$2" "$3" $4)

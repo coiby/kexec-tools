@@ -738,7 +738,7 @@ check_ssh_config()
 
 	[[ "${OPT[_fstype]}" == ssh ]] || return 0
 
-	target=$(ssh -G "${OPT[_target]}" | sed  -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
+	target=$(ssh -G "${OPT[_target]}" | sed -n -e "s/^hostname[[:space:]]\+\([^[:space:]]*\).*$/\1/p")
 	[[ ${OPT[_target]} =~ .*@.* ]] || return 1
 	if [[ ${OPT[_target]#*@} != "$target" ]]; then
 		derror "Invalid ssh destination ${OPT[_target]} provided."
@@ -806,7 +806,7 @@ propagate_ssh_key()
 
 	parse_config || return 1
 
-	if [[ ${OPT[_fstype]} != ssh ]] ; then
+	if [[ ${OPT[_fstype]} != ssh ]]; then
 		derror "No ssh destination defined in $KDUMP_CONFIG_FILE."
 		derror "Please verify that $KDUMP_CONFIG_FILE contains 'ssh <user>@<host>' and that it is properly formatted."
 		exit 1
@@ -1449,30 +1449,30 @@ reset_crashkernel()
 
 	for _opt in "$@"; do
 		case "$_opt" in
-			--fadump=*)
-				_val=${_opt#*=}
-				if _dump_mode=$(get_dump_mode_by_fadump_val $_val); then
-					_fadump_val=$_val
-				else
-					derror "failed to determine dump mode"
-					exit
-				fi
-				;;
-			--kernel=*)
-				_val=${_opt#*=}
-				if ! _valid_grubby_kernel_path $_val; then
-					derror "Invalid $_opt, please specify a valid kernel path, ALL or DEFAULT"
-					exit
-				fi
-				_grubby_kernel_path=$_val
-				;;
-			--reboot)
-				_reboot=yes
-				;;
-			*)
-				derror "$_opt not recognized"
-				exit 1
-				;;
+		--fadump=*)
+			_val=${_opt#*=}
+			if _dump_mode=$(get_dump_mode_by_fadump_val $_val); then
+				_fadump_val=$_val
+			else
+				derror "failed to determine dump mode"
+				exit
+			fi
+			;;
+		--kernel=*)
+			_val=${_opt#*=}
+			if ! _valid_grubby_kernel_path $_val; then
+				derror "Invalid $_opt, please specify a valid kernel path, ALL or DEFAULT"
+				exit
+			fi
+			_grubby_kernel_path=$_val
+			;;
+		--reboot)
+			_reboot=yes
+			;;
+		*)
+			derror "$_opt not recognized"
+			exit 1
+			;;
 		esac
 	done
 
@@ -1531,10 +1531,10 @@ reset_crashkernel()
 	if [[ -z $_grubby_kernel_path ]]; then
 		if [[ -z $KDUMP_KERNELVER ]] ||
 			! _kernel_path=$(_find_kernel_path_by_release "$KDUMP_KERNELVER"); then
-					if ! _kernel_path=$(_get_current_running_kernel_path); then
-						derror "no running kernel found"
-						exit 1
-					fi
+			if ! _kernel_path=$(_get_current_running_kernel_path); then
+				derror "no running kernel found"
+				exit 1
+			fi
 		fi
 		_kernels=$_kernel_path
 	else
@@ -1609,9 +1609,9 @@ update_crashkernel_in_grub_etc_default_after_update()
 	_new_default_crashkernel=${_crashkernel_vals[new_${_dump_mode}]}
 
 	if [[ $_crashkernel == auto ]] ||
-		  [[ $_crashkernel == "$_old_default_crashkernel" &&
-		     $_new_default_crashkernel != "$_old_default_crashkernel" ]]; then
-			_update_kernel_arg_in_grub_etc_default crashkernel "$_new_default_crashkernel"
+		[[ $_crashkernel == "$_old_default_crashkernel" &&
+			$_new_default_crashkernel != "$_old_default_crashkernel" ]]; then
+		_update_kernel_arg_in_grub_etc_default crashkernel "$_new_default_crashkernel"
 	fi
 }
 
