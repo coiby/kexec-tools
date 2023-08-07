@@ -990,6 +990,49 @@ kdump_install_systemd_conf() {
     echo "ForwardToConsole=yes" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
 }
 
+kdump_check_crypt_targets()
+{
+    local _luks_dev _devuuid _key_desc
+
+    _luks_dev=$(get_all_kdump_crypt_dev)
+    if [[ -z $_luks_dev ]]; then
+        return
+    fi
+
+    # This overrides behaviour of 90crypt
+    # inst_hook cmdline 20 "/usr/lib/kdump/kexec-crypt-setup.sh"
+
+    inst cryptsetup
+    instmods dm_crypt
+
+    _devuuid=$(maj_min_to_uuid "$_luks_dev")
+    echo "kdump_luks_uuid=${_devuuid}" > "${initdir}/etc/cmdline.d/62kdump_luks.conf"
+
+    _key_desc=cryptsetup:$_devuuid
+    mkdir -p $hookdir/initqueue/finished
+    printf -- '[ -e /dev/disk/by-id/dm-uuid-CRYPT-LUKS?-*-luks-%s ] || exit 1\n' "$_devuuid" >> $hookdir/initqueue/finished/99-kdumpbase-crypt.sh
+
+    mkdir -p "${initdir}/etc/udev/rules.d/"
+    {
+     printf -- 'ENV{ID_FS_UUID}=="%s", ' "$_devuuid"
+     printf -- 'RUN+="/usr/bin/echo -n %s > /sys/kernel/crash_dm_crypt_key && ' "$_key_desc"
+     printf -- '/sbin/initqueue  --settled --unique --onetime '
+     printf -- '--name kdump-crypt-target-%%k %s ' "$(command -v cryptsetup)"
+     printf -- 'luksOpen --volume-key-keyring %s $env{DEVNAME} %s"\n' "%%user:$_key_desc" "luks-$_devuuid"
+    } >> "${initdir}/etc/udev/rules.d/70-luks-kdump.rules"
+
+    echo > "$initdir/etc/cmdline.d/90crypt.conf"
+    echo > "$initdir/etc/crypttab"
+
+    mkdir -p "${initdir}/etc/systemd/system.conf.d"
+    {
+      echo "[Manager]"
+      echo "ProtectSystem=false"
+    } >> "${initdir}/etc/systemd/system.conf.d/kdump_luks.conf"
+
+    dracut_need_initqueue
+}
+
 remove_cpu_online_rule() {
     local file=${initdir}/usr/lib/udev/rules.d/40-redhat.rules
 
@@ -1051,6 +1094,8 @@ install() {
     # target. Ideally all this should be pushed into dracut iscsi module
     # at some point of time.
     kdump_check_iscsi_targets
+
+    kdump_check_crypt_targets
 
     kdump_install_systemd_conf
 
