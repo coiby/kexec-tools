@@ -1027,6 +1027,15 @@ check_final_action_config()
 	esac
 }
 
+prepare_luks() {
+	local _luks_dev
+
+	_luks_dev=$(get_all_kdump_crypt_dev)
+	if [[ -n $_luks_dev ]]; then
+		echo "cryptsetup_key_description" > /sys/kernel/crash_luks_volume_key
+	fi
+}
+
 start()
 {
 	check_dump_feasibility || return
@@ -1044,6 +1053,7 @@ start()
 	fi
 
 	check_and_wait_network_ready || return
+	# prepare_luks
 	setup_initrd || return
 	need_initrd_rebuild
 	case "$?" in

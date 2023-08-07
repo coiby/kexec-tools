@@ -981,6 +981,29 @@ kdump_install_systemd_conf() {
     echo "ForwardToConsole=yes" >> "${initdir}/etc/systemd/journald.conf.d/kdump.conf"
 }
 
+kdump_check_crypt_targets()
+{
+    local _luks_dev
+
+    _luks_dev=$(get_all_kdump_crypt_dev)
+    if [[ -z $_luks_dev ]]; then
+        return
+    fi
+
+    # This overrides behaviour of 90crypt
+    inst_hook cmdline 20 "/usr/lib/kdump/kexec-crypt-setup.sh"
+
+    inst cryptsetup
+    instmods dm_crypt
+
+    echo "kdump_luks_uuid=88f30c7d-c6f3-4774-ad1a-d46582c01ea7" > "${initdir}/etc/cmdline.d/62kdump_luks.conf"
+
+    echo > "$initdir/etc/cmdline.d/90crypt.conf"
+    echo > "$initdir/etc/crypttab"
+
+    dracut_need_initqueue
+}
+
 remove_cpu_online_rule() {
     local file=${initdir}/usr/lib/udev/rules.d/40-redhat.rules
 
@@ -1042,6 +1065,8 @@ install() {
     # target. Ideally all this should be pushed into dracut iscsi module
     # at some point of time.
     kdump_check_iscsi_targets
+
+    kdump_check_crypt_targets
 
     kdump_install_systemd_conf
 
