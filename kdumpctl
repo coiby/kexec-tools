@@ -1030,6 +1030,15 @@ check_final_action_config()
 	esac
 }
 
+prepare_luks() {
+	local _luks_dev
+
+	for _luks_dev in $(get_all_kdump_crypt_dev); do
+		_devuuid=$(maj_min_to_uuid "$_luks_dev")
+		echo -n "cryptsetup:$_devuuid" > /sys/kernel/crash_dm_crypt_key
+	done
+}
+
 start()
 {
 	check_dump_feasibility || return
@@ -1672,6 +1681,8 @@ main()
 {
 	# Determine if the dump mode is kdump or fadump
 	determine_dump_mode
+
+	prepare_luks
 
 	case "$1" in
 	start)

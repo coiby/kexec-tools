@@ -39,6 +39,7 @@ Source34: crashkernel-howto.txt
 Source35: kdump-migrate-action.sh
 Source36: kdump-restart.sh
 Source37: 60-fadump.install
+Source38: kexec-crypt-setup.sh
 
 #######################################
 # These are sources for mkdumpramfs
@@ -198,6 +199,7 @@ install -m 644 %{SOURCE25} $RPM_BUILD_ROOT%{_mandir}/man8/kdumpctl.8
 install -m 755 %{SOURCE20} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib.sh
 install -m 755 %{SOURCE23} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-lib-initramfs.sh
 install -m 755 %{SOURCE31} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-logger.sh
+install -m 755 %{SOURCE38} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kexec-crypt-setup.sh
 %ifarch ppc64 ppc64le
 install -m 755 %{SOURCE32} $RPM_BUILD_ROOT/usr/sbin/mkfadumprd
 install -m 755 %{SOURCE35} $RPM_BUILD_ROOT%{_prefix}/lib/kdump/kdump-migrate-action.sh
@@ -320,6 +322,7 @@ fi
 /usr/sbin/mkfadumprd
 %{_prefix}/lib/kernel/install.d/60-fadump.install
 %endif
+#%{_prefix}/lib/kdump/kexec-crypt-setup.sh
 /usr/sbin/mkdumprd
 /usr/sbin/vmcore-dmesg
 %{_bindir}/*
